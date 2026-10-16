@@ -1,6 +1,6 @@
 [package]
 name = "cadres-riad"
-version = "0.2.0"
+version = "0.3.0"
 description = "Cadres Riad — éditeur de photos encadrées"
 authors = ["Joshua Grant"]
 license = "AGPL-3.0-or-later"
@@ -33,3 +33,7 @@ objc2-app-kit = { version = "0.3", default-features = false, features = ["std", 
 
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.62", features = ["UI_ViewManagement"] }
+
+[target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]
+tauri-plugin-process = "2"
+tauri-plugin-updater = "2"

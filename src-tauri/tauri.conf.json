@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Cadres Riad",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "identifier": "com.joshgrant.cadresriad",
   "build": {
     "frontendDist": "../dist",
@@ -73,6 +73,18 @@
       },
       "wix": {
         "language": "fr-FR"
+      }
+    },
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEUzQkQzQzMzN0IwN0QzOTYKUldTVzB3ZDdNenk5NC83T3NXVXBKbks4dGE1eXgxTEQraDNEaWZoN3Jsdmo2V2MxblVjT29QdmsK",
+      "endpoints": [
+        "https://github.com/joshgrant/cadres-riad/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
       }
     }
   }

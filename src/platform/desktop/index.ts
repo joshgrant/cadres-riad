@@ -102,9 +102,23 @@ export const desktopPlatform: Platform = {
     return true;
   },
   openImages: pickFiles,
-  // The Tauri updater arrives with the release workflow (milestone 7).
   async checkForUpdate() {
-    return null;
+    try {
+      const { check } = await import('@tauri-apps/plugin-updater');
+      const update = await check();
+      if (!update) return null;
+      return {
+        version: update.version,
+        async install() {
+          await update.downloadAndInstall();
+          const { relaunch } = await import('@tauri-apps/plugin-process');
+          await relaunch();
+        },
+      };
+    } catch {
+      // Offline, or no release yet: try again later.
+      return null;
+    }
   },
 };
 

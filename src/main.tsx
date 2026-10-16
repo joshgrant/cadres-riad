@@ -6,6 +6,7 @@ import { persistPrefs } from './app/prefs';
 import { installShortcuts } from './app/shortcuts';
 import { installBackgrounds } from './app/backgrounds';
 import { installCutout } from './segmentation/cutout';
+import { installUpdateCheck } from './app/updates';
 import { fontsVersion } from './app/store';
 import { initPlatform } from './platform';
 import '@fontsource/caveat/latin-500.css';
@@ -41,6 +42,7 @@ persistPrefs();
 installShortcuts();
 installBackgrounds();
 installCutout();
+installUpdateCheck();
 platform.onOpenedFile((file) => void loadPhoto(file));
 
 // Canvas text needs the frame fonts loaded first; redraw once they are.

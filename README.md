@@ -30,7 +30,7 @@ Téléchargez la dernière version depuis la page **Releases** du dépôt.
 
 Les avertissements viennent de ce que l’application n’est pas signée par un certificat payant ; ils ne réapparaissent pas ensuite.
 
-**Mettre à jour** : il n’y a pas de mise à jour automatique. Pour une nouvelle version, installez simplement le nouveau fichier par-dessus l’ancien ; les réglages, les fonds et le modèle de détourage sont conservés.
+**Mises à jour** : à partir de la version 0.3, l’application vérifie elle-même s’il existe une nouvelle version. Un message « Une mise à jour est disponible. » apparaît alors ; cliquez sur **Mettre à jour**, l’application s’installe et redémarre. Rien ne se fait sans votre clic. Les réglages, les fonds et le modèle de détourage sont conservés.
 
 ## Development
 
@@ -64,7 +64,9 @@ Playwright’s Chromium and WebKit stand in for WebView2 (Windows) and WKWebView
   git tag v0.1.0 && git push origin v0.1.0
   ```
 
-  Bump `version` in `package.json` and `src-tauri/tauri.conf.json` together.
+  Bump `version` in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml` together.
+
+  Update bundles are signed with the key whose public half is in `tauri.conf.json` (`plugins.updater.pubkey`). The private key and its password are GitHub secrets (`TAURI_SIGNING_PRIVATE_KEY`, `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`); the maintainer keeps a copy outside the repo. Losing it means installed apps can no longer verify updates and would need one manual reinstall with a new key. Installed apps only see a release once it is published (not while it is a draft).
 
 ### Layout
 

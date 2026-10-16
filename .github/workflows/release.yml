@@ -1,7 +1,8 @@
 name: Release
 
 # Push a version tag (e.g. v0.1.0) to build the macOS and Windows installers
-# into a draft GitHub Release.
+# into a draft GitHub Release, with signed update bundles and latest.json.
+# Installed apps see the update once the release is published.
 on:
   push:
     tags: ['v*']
@@ -39,6 +40,9 @@ jobs:
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Signs the update bundles; installed apps verify them with the public key in tauri.conf.json.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: v__VERSION__
           releaseName: Cadres Riad v__VERSION__
@@ -48,3 +52,6 @@ jobs:
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
+          # latest.json points Windows updates at the .exe installer he uses.
+          includeUpdaterJson: true
+          updaterJsonPreferNsis: true

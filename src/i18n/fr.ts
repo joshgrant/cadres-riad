@@ -61,6 +61,8 @@ const source = {
   'drawer.close': 'Fermer',
   'update.available': 'Une mise à jour est disponible.',
   'update.action': 'Mettre à jour',
+  'update.installing': 'Installation de la mise à jour…',
+  'update.failed': 'La mise à jour n’a pas pu être installée. Réessayez plus tard.',
   'error.format': 'Ce format d’image n’est pas pris en charge. Utilisez une photo JPEG ou PNG.',
   'error.cutout': 'Le détourage n’a pas pu démarrer. Vérifiez la connexion Internet, puis réessayez.',
   'error.storage': 'Plus assez d’espace pour ce fond. Supprimez un fond existant, puis réessayez.',
