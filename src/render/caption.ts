@@ -61,7 +61,7 @@ export function captionStyle(frame: FrameId, layout: FrameLayout): CaptionStyle 
     // Brass plaque: 68% of the rail's height (a smaller plate on Bois brut),
     // centred on it; text padded by 1.2× its cap height plus room for the screws.
     const height = rails.bottom * (frame === 'brut' ? 0.56 : 0.68);
-    const fontSize = height * 0.42;
+    const fontSize = height * (frame === 'brut' ? 0.5 : 0.42);
     const pad = plaquePadding(height, fontSize);
     const width = outer.width * 0.7 - 2 * pad;
     const centreY = outer.y + outer.height - rails.bottom / 2;
@@ -85,7 +85,8 @@ export function captionStyle(frame: FrameId, layout: FrameLayout): CaptionStyle 
     family: SERIF,
     weight: kind === 'burned' ? 700 : 600,
     box,
-    fontSize: rails.bottom * 0.46,
+    // Gold lettering on Noir is set larger so it reads against the dark wood.
+    fontSize: rails.bottom * (frame === 'noir' ? 0.56 : 0.46),
     letterSpacing: rails.bottom * 0.02,
     color: colors[frame],
   };

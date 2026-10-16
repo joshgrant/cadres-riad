@@ -52,7 +52,8 @@ float plaqueHeight(vec2 local) {
   if (d < 0.0) return 0.0;
   // Polished: a two-step bevel. Aged: one soft, worn edge.
   float bevel = smoothstep(0.0, H * 0.035, d) * 0.5 + smoothstep(H * 0.035, H * 0.08, d) * 0.5;
-  bevel = mix(bevel, smoothstep(0.0, H * 0.07, d), u_aged);
+  // A thin sheet: just a narrow eased edge.
+  bevel = mix(bevel, smoothstep(0.0, H * 0.025, d), u_aged);
   float h = 0.04 * bevel;
   for (int i = 0; i < 2; i++) {
     float side = i == 0 ? -1.0 : 1.0;
@@ -70,7 +71,7 @@ float plaqueHeight(vec2 local) {
     }
   }
   // The engraving: cut, then filled with lacquer a little below the surface.
-  h -= textAt(local) * 0.012;
+  h -= textAt(local) * mix(0.012, 0.008, u_aged);
   return h;
 }
 
@@ -84,7 +85,8 @@ void main() {
   // Contact shadow on the rail, offset down a touch and softly blurred.
   float shadowOffset = 2.0 * u_scale / 2.4;
   float sdShadow = sdRoundRect(p - vec2(0.0, shadowOffset), u_plaque * 0.5, H * 0.06);
-  float shadow = 0.45 * (1.0 - smoothstep(-shadowOffset, shadowOffset * 2.5, sdShadow));
+  // A thin aged sheet sits closer to the wood: a tighter, lighter shadow.
+  float shadow = mix(0.45, 0.3, u_aged) * (1.0 - smoothstep(-shadowOffset, shadowOffset * mix(2.5, 1.5, u_aged), sdShadow));
 
   float coverage = 1.0 - smoothstep(-aa, aa, sd);
   if (coverage <= 0.0 && shadow <= 0.0) discard;
@@ -107,13 +109,14 @@ void main() {
   Surface surface;
   if (text > 0.5) {
     // Black lacquer fill, glossy (aged: a duller dark fill).
-    surface = Surface(mix(vec3(0.137, 0.11, 0.078), vec3(0.1, 0.085, 0.06), u_aged), mix(0.25, 0.6, u_aged), 0.12, 0.0);
+    surface = Surface(mix(vec3(0.137, 0.11, 0.078), vec3(0.05, 0.04, 0.03), u_aged), mix(0.25, 0.45, u_aged), 0.12, 0.0);
   } else if (u_aged > 0.5) {
     // Aged brass: duller, with darker patina in blotches and towards the edges.
-    float patina = smoothstep(0.4, 0.85, fbm(local / H * 1.2 + u_seed * 3.0));
-    float edgeWear = 1.0 - smoothstep(0.0, H * 0.14, -sd);
-    vec3 brass = vec3(0.76, 0.62, 0.38);
-    brass = mix(brass, vec3(0.5, 0.42, 0.27), clamp(patina * 0.35 + edgeWear * 0.35, 0.0, 1.0));
+    // Light patina, kept off the lettering so the text stays crisp.
+    float patina = smoothstep(0.45, 0.85, fbm(local / H * 1.2 + u_seed * 3.0));
+    float edgeWear = 1.0 - smoothstep(0.0, H * 0.04, -sd);
+    vec3 brass = vec3(0.84, 0.7, 0.44);
+    brass = mix(brass, vec3(0.58, 0.48, 0.3), clamp(patina * 0.25 + edgeWear * 0.3, 0.0, 1.0));
     surface = Surface(onScrew ? vec3(0.32, 0.26, 0.17) : brass, onScrew ? 0.45 : 0.55, 0.3, 1.0);
   } else {
     vec3 brass = vec3(0.88, 0.72, 0.42) * (0.94 + streak * 0.1);
