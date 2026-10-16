@@ -1,0 +1,65 @@
+.icon-button {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: var(--hit-target);
+  height: var(--hit-target);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-primary);
+  transition: background-color var(--duration-standard) var(--ease-standard);
+}
+
+.icon-button .icon {
+  width: var(--icon-size);
+  height: var(--icon-size);
+}
+
+.icon-button:hover:not(:disabled) {
+  background: var(--fill-hover);
+}
+
+.icon-button:active:not(:disabled) {
+  background: var(--fill-pressed);
+}
+
+.icon-button:disabled {
+  opacity: var(--disabled-opacity);
+  cursor: default;
+}
+
+.icon-button[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.icon-button[aria-pressed='true']:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 88%, var(--text-primary));
+}
+
+/* Determinate ring around the icon during the first model download. */
+.icon-button__progress {
+  position: absolute;
+  inset: 3px;
+  width: calc(100% - 6px);
+  height: calc(100% - 6px);
+  transform: rotate(-90deg);
+  pointer-events: none;
+}
+
+.icon-button__progress circle {
+  fill: none;
+  stroke-width: 2.5;
+}
+
+.icon-button__progress-track {
+  stroke: var(--separator);
+}
+
+.icon-button__progress-bar {
+  stroke: currentColor;
+  stroke-linecap: round;
+}

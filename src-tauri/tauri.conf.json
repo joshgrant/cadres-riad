@@ -1,0 +1,57 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "Cadres Riad",
+  "version": "0.1.0",
+  "identifier": "com.joshgrant.cadresriad",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:5173",
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Cadres Riad",
+        "width": 1280,
+        "height": 820,
+        "minWidth": 640,
+        "minHeight": 480,
+        "center": true,
+        "resizable": true,
+        "dragDropEnabled": false,
+        "zoomHotkeysEnabled": true
+      }
+    ],
+    "security": {
+      "csp": null,
+      "headers": {
+        "Cross-Origin-Opener-Policy": "same-origin",
+        "Cross-Origin-Embedder-Policy": "require-corp"
+      }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["app", "dmg", "nsis", "msi"],
+    "category": "Photography",
+    "shortDescription": "Encadrez vos photos",
+    "copyright": "© 2026 Joshua Grant — AGPL-3.0",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "macOS": {
+      "minimumSystemVersion": "13.0"
+    },
+    "windows": {
+      "webviewInstallMode": { "type": "downloadBootstrapper" },
+      "nsis": { "languages": ["French"], "displayLanguageSelector": false },
+      "wix": { "language": "fr-FR" }
+    }
+  }
+}

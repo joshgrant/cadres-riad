@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f4efe6"/>
+      <stop offset="1" stop-color="#e2d8c6"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e9c977"/>
+      <stop offset="0.5" stop-color="#c39a3e"/>
+      <stop offset="1" stop-color="#8a6420"/>
+    </linearGradient>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f3b46a"/>
+      <stop offset="1" stop-color="#e07a4a"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="22" stdDeviation="26" flood-color="#3a2a12" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <rect x="64" y="64" width="896" height="896" rx="200" fill="url(#bg)"/>
+  <g filter="url(#shadow)">
+    <rect x="212" y="212" width="600" height="600" fill="url(#gold)"/>
+  </g>
+  <!-- Mitred rails, lit from above -->
+  <path d="M212 212h600l-84 84H296z" fill="#fff" opacity="0.28"/>
+  <path d="M812 212v600l-84-84V296z" fill="#000" opacity="0.06"/>
+  <path d="M212 812h600l-84-84H296z" fill="#000" opacity="0.2"/>
+  <path d="M212 212v600l84-84V296z" fill="#000" opacity="0.06"/>
+  <!-- Window with a horseshoe arch at sunset -->
+  <rect x="296" y="296" width="432" height="432" fill="url(#sky)"/>
+  <circle cx="512" cy="640" r="58" fill="#fbe3b0"/>
+  <!-- Riad wall with a horseshoe-arch doorway -->
+  <path fill-rule="evenodd" fill="#f1e6d2" d="M296 296h432v432H296z M412 728V606.3A120 120 0 1 1 612 606.3V728z"/>
+  <path fill="none" stroke="#c9a46a" stroke-width="10" d="M412 728V606.3A120 120 0 1 1 612 606.3V728"/>
+  <path d="M296 296h432v14H296z" fill="#000" opacity="0.25"/>
+  <rect x="296" y="296" width="432" height="432" fill="none" stroke="#5a3a1e" stroke-width="8"/>
+</svg>

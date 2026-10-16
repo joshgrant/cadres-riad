@@ -1,0 +1,28 @@
+.progress-bar {
+  position: relative;
+  height: 0.375rem;
+  border-radius: var(--radius-full);
+  background: var(--separator);
+  overflow: hidden;
+}
+
+.progress-bar__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width var(--duration-standard) linear;
+}
+
+.progress-bar--indeterminate .progress-bar__fill {
+  width: 40%;
+  animation: progress-shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes progress-shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}

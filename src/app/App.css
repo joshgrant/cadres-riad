@@ -1,0 +1,31 @@
+.app {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+  height: 100%;
+  /* Below this the page scrolls vertically rather than crushing the frame. */
+  min-height: 26rem;
+}
+
+.app__sidebar {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--bg-sidebar);
+  border-right: var(--hairline) solid var(--separator);
+}
+
+@media (max-width: 63.99rem) {
+  .app {
+    grid-template-columns: var(--sidebar-width-compact) minmax(0, 1fr);
+  }
+
+  .app__sidebar .sidebar {
+    padding: var(--space-4);
+  }
+}
+
+@media (max-width: 47.99rem) {
+  .app {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

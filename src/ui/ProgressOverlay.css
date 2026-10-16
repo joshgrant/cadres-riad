@@ -1,0 +1,22 @@
+.progress-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  background: color-mix(in srgb, var(--bg-canvas) 45%, transparent);
+}
+
+.progress-overlay__panel {
+  display: grid;
+  gap: var(--space-2);
+  width: min(18rem, 100%);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  box-shadow: var(--elevation-1);
+}
+
+.progress-overlay__message {
+  margin: 0;
+  text-align: center;
+}

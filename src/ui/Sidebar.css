@@ -1,0 +1,34 @@
+.sidebar {
+  padding: var(--space-5);
+}
+
+.sidebar__separator {
+  height: var(--hairline);
+  margin: var(--space-5) 0;
+  border: 0;
+  background: var(--separator);
+}
+
+.sidebar__note {
+  margin: 0 0 var(--space-3);
+}
+
+.sidebar__background-grid .tile__preview {
+  transition:
+    opacity var(--duration-standard) var(--ease-standard),
+    transform var(--duration-standard) var(--ease-standard),
+    box-shadow var(--duration-standard) var(--ease-standard);
+}
+
+/*
+ * Détourage off: the tiles dim but stay clickable. Only the previews dim, so
+ * labels keep their contrast.
+ */
+.sidebar__backgrounds--dimmed .sidebar__background-grid .tile__preview {
+  opacity: var(--dimmed-opacity);
+}
+
+.sidebar__backgrounds--dimmed .sidebar__background-grid .tile__button:hover .tile__preview,
+.sidebar__backgrounds--dimmed .sidebar__background-grid .tile__button:focus-visible .tile__preview {
+  opacity: 1;
+}

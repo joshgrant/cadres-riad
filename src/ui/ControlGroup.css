@@ -1,0 +1,19 @@
+.control-group {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--radius-full);
+  box-shadow: var(--elevation-1);
+}
+
+.control-group .icon-button {
+  border-radius: var(--radius-full);
+}
+
+.control-group__divider {
+  align-self: stretch;
+  width: var(--hairline);
+  margin: var(--space-2) 0;
+  background: var(--separator);
+}

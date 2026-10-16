@@ -1,0 +1,57 @@
+.drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+}
+
+.drawer__scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--scrim);
+  animation: drawer-fade var(--duration-standard) var(--ease-standard);
+}
+
+.drawer__panel {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  width: min(var(--sidebar-width), calc(100% - var(--space-7)));
+  background: var(--bg-sidebar);
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+  box-shadow: var(--elevation-1);
+  animation: drawer-slide var(--duration-standard) var(--ease-standard);
+}
+
+.drawer__header {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--space-2) var(--space-2) 0;
+}
+
+.drawer__content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+@keyframes drawer-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes drawer-slide {
+  from {
+    transform: translateX(-100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawer__scrim,
+  .drawer__panel {
+    animation: none;
+  }
+}

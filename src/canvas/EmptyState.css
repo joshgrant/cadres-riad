@@ -1,0 +1,70 @@
+.empty-state {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  container-type: size;
+  overflow: hidden;
+  color: #1d1d1f; /* Sits on the neutral backdrop, which is light in both themes. */
+}
+
+.empty-state__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(var(--space-1), 3cqh, var(--space-3));
+  max-width: min(26rem, 88cqw);
+  padding: var(--space-2);
+  text-align: center;
+}
+
+.empty-state__glyph {
+  width: clamp(1.75rem, 16cqh, var(--empty-glyph-size));
+  height: clamp(1.75rem, 16cqh, var(--empty-glyph-size));
+  color: #4a4a4f;
+}
+
+.empty-state__title {
+  margin: 0;
+  font-size: clamp(var(--type-body-size), 7cqh, var(--type-title-size));
+  font-weight: var(--type-title-weight);
+  line-height: var(--type-title-leading);
+}
+
+.empty-state__body {
+  margin: 0;
+  font-size: var(--type-secondary-size);
+  line-height: var(--type-secondary-leading);
+  color: #4a4a4f;
+}
+
+.empty-state__button {
+  min-height: var(--hit-target);
+  padding: var(--space-2) var(--space-4);
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--accent-button);
+  color: var(--on-accent);
+  font-weight: var(--type-body-strong-weight);
+}
+
+.empty-state__button:hover {
+  filter: brightness(1.08);
+}
+
+.empty-state__button:active {
+  filter: brightness(0.92);
+}
+
+/* Short windows: drop the description first, then the glyph. */
+@container (max-height: 13rem) {
+  .empty-state__body {
+    display: none;
+  }
+}
+
+@container (max-height: 8rem) {
+  .empty-state__glyph,
+  .empty-state__title {
+    display: none;
+  }
+}

@@ -1,0 +1,141 @@
+/*
+ * Design tokens. Components read only these custom properties, never raw values.
+ * Light is the default; dark follows the system (`prefers-color-scheme`).
+ * `data-theme` exists only so the dev components page can show both themes side by side.
+ */
+
+:root {
+  color-scheme: light dark;
+
+  /* Typography */
+  --font-ui: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
+
+  --type-title-size: 1.375rem;
+  --type-title-weight: 600;
+  --type-title-leading: 1.25;
+
+  --type-body-size: 1.0625rem;
+  --type-body-weight: 400;
+  --type-body-leading: 1.45;
+  --type-body-strong-weight: 590;
+
+  --type-secondary-size: 0.9375rem;
+  --type-secondary-weight: 400;
+  --type-secondary-leading: 1.4;
+
+  /* Spacing (4px base) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+
+  /* Radii */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-full: 999px;
+
+  /* Sizes */
+  --sidebar-width: 18rem;
+  --sidebar-width-compact: 15rem;
+  --hit-target: 2.75rem; /* 44px */
+  --icon-size: 1.375rem;
+  --empty-glyph-size: 3.5rem;
+  --focus-ring-width: 3px;
+  --focus-ring-offset: 2px;
+  --selected-ring-width: 3px;
+  --hairline: 1px;
+  --tooltip-gap: 8px;
+
+  /* Colour: light */
+  --bg-sidebar: #f5f5f7;
+  --bg-canvas: #e8e8ed;
+  --surface: #ffffff;
+  --material: rgba(255, 255, 255, 0.72);
+  --text-primary: #1d1d1f;
+  --text-secondary: #5b5b60;
+  --separator: rgba(0, 0, 0, 0.12);
+  --accent: #0071e3;
+  /* Fill behind on-accent text. Dark mode's brighter accent is only 3.6:1 with white, so text buttons keep this. */
+  --accent-button: #0071e3;
+  --accent-text: #0066cc;
+  --on-accent: #ffffff;
+  --danger: #d70015;
+  --scrim: rgba(0, 0, 0, 0.32);
+
+  /* State fills, derived from text-primary */
+  --fill-hover: color-mix(in srgb, var(--text-primary) 6%, transparent);
+  --fill-pressed: color-mix(in srgb, var(--text-primary) 10%, transparent);
+  --disabled-opacity: 0.35;
+  --dimmed-opacity: 0.5;
+
+  /* Material and elevation */
+  --material-filter: blur(20px) saturate(180%);
+  --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.08), 0 6px 20px rgba(0, 0, 0, 0.1);
+  /* Frame hangs on a wall lit from above: soft, straight down. */
+  --shadow-frame: 0 1.2rem 2.5rem -0.6rem rgba(0, 0, 0, 0.35);
+
+  /* Motion */
+  --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --duration-standard: 200ms;
+  --duration-crossfade: 250ms;
+  --duration-crossfade-long: 300ms;
+}
+
+/* Colour: dark */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg-sidebar: #1f1f21;
+    --bg-canvas: #121214;
+    --surface: #2c2c2e;
+    --material: rgba(44, 44, 46, 0.72);
+    --text-primary: #f5f5f7;
+    --text-secondary: #a8a8ad;
+    --separator: rgba(255, 255, 255, 0.14);
+    --accent: #0a84ff;
+    --accent-text: #4da3ff;
+    --on-accent: #ffffff;
+    --danger: #ff453a;
+    --scrim: rgba(0, 0, 0, 0.5);
+    --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.16), 0 6px 20px rgba(0, 0, 0, 0.2);
+    --shadow-frame: 0 1.2rem 2.5rem -0.6rem rgba(0, 0, 0, 0.6);
+  }
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+  /* Re-derived here: custom properties resolve where declared, not where used. */
+  --fill-hover: color-mix(in srgb, var(--text-primary) 6%, transparent);
+  --fill-pressed: color-mix(in srgb, var(--text-primary) 10%, transparent);
+  --bg-sidebar: #1f1f21;
+  --bg-canvas: #121214;
+  --surface: #2c2c2e;
+  --material: rgba(44, 44, 46, 0.72);
+  --text-primary: #f5f5f7;
+  --text-secondary: #a8a8ad;
+  --separator: rgba(255, 255, 255, 0.14);
+  --accent: #0a84ff;
+  --accent-text: #4da3ff;
+  --on-accent: #ffffff;
+  --danger: #ff453a;
+  --scrim: rgba(0, 0, 0, 0.5);
+  --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.16), 0 6px 20px rgba(0, 0, 0, 0.2);
+  --shadow-frame: 0 1.2rem 2.5rem -0.6rem rgba(0, 0, 0, 0.6);
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-standard: 0ms;
+    --duration-crossfade: 0ms;
+    --duration-crossfade-long: 0ms;
+  }
+}

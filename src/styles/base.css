@@ -1,0 +1,90 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-ui);
+  font-size: var(--type-body-size);
+  font-weight: var(--type-body-weight);
+  line-height: var(--type-body-leading);
+  color: var(--text-primary);
+  background: var(--bg-canvas);
+  -webkit-font-smoothing: antialiased;
+  overflow: auto;
+}
+
+#app {
+  height: 100%;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: var(--focus-ring-width) solid var(--accent);
+  outline-offset: var(--focus-ring-offset);
+}
+
+svg {
+  display: block;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.type-title {
+  font-size: var(--type-title-size);
+  font-weight: var(--type-title-weight);
+  line-height: var(--type-title-leading);
+}
+
+.type-secondary {
+  font-size: var(--type-secondary-size);
+  font-weight: var(--type-secondary-weight);
+  line-height: var(--type-secondary-leading);
+  color: var(--text-secondary);
+}
+
+/* Translucent material for floating chrome; solid surface where blur is unsupported. */
+.material {
+  background: var(--surface);
+  border: var(--hairline) solid var(--separator);
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .material {
+    background: var(--material);
+    -webkit-backdrop-filter: var(--material-filter);
+    backdrop-filter: var(--material-filter);
+  }
+}

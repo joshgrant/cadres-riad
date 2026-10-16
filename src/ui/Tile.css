@@ -1,0 +1,126 @@
+/*
+ * One grid for both sections. The radiogroup uses display: contents so the Add
+ * tile shares its grid cells; the group keeps its role on browsers that support
+ * accessible display: contents, and the radios stay correct either way.
+ */
+.tile-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.tile-grid__radios {
+  display: contents;
+}
+
+.tile {
+  position: relative;
+  min-width: 0;
+}
+
+.tile__button {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: center;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+}
+
+.tile__preview {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  overflow: hidden;
+  transition:
+    transform var(--duration-standard) var(--ease-standard),
+    box-shadow var(--duration-standard) var(--ease-standard);
+}
+
+.tile__preview > canvas,
+.tile__preview > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tile__button:hover .tile__preview {
+  transform: translateY(-1px);
+  box-shadow: var(--elevation-1);
+}
+
+.tile__button:focus-visible {
+  outline: none;
+}
+
+.tile__button:focus-visible .tile__preview {
+  outline: var(--focus-ring-width) solid var(--accent);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.tile--selected .tile__preview {
+  outline: var(--selected-ring-width) solid var(--accent);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.tile__label {
+  font-size: var(--type-secondary-size);
+  line-height: var(--type-secondary-leading);
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.tile--selected .tile__label {
+  color: var(--text-primary);
+  font-weight: var(--type-body-strong-weight);
+}
+
+.tile--add .tile__preview {
+  background: transparent;
+  border: 2px dashed var(--separator);
+  color: var(--text-secondary);
+}
+
+.tile--add .tile__preview .icon {
+  width: var(--icon-size);
+  height: var(--icon-size);
+}
+
+.tile__delete {
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-1);
+  display: grid;
+  place-items: center;
+  width: var(--hit-target);
+  height: var(--hit-target);
+  padding: 0;
+  border-radius: var(--radius-full);
+  color: var(--text-primary);
+  opacity: 0;
+  transition: opacity var(--duration-standard) var(--ease-standard);
+}
+
+.tile__delete .icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.tile:hover .tile__delete,
+.tile:focus-within .tile__delete {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .tile__delete {
+    opacity: 1;
+  }
+}

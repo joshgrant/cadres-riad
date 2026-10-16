@@ -1,0 +1,8 @@
+node_modules/
+dist/
+test-results/
+playwright-report/
+.DS_Store
+*.local
+# Private spec; describes family members, kept out of the public repo.
+Cadres — spécification de l'éditeur photo.md
