@@ -38,7 +38,9 @@ export function drawFrameLayer(
     const style = captionStyle(frame, layout);
     const hasText = caption.trim().length > 0;
     const plaque =
-      style.kind === 'plaque' && (hasText || !options.forExport) ? plaqueRect(layout, style, fitCaption(caption, style)) : null;
+      style.kind === 'plaque' && (hasText || !options.forExport)
+        ? { rect: plaqueRect(layout, style, fitCaption(caption, style)), aged: frame === 'brut' }
+        : null;
     const drawn = drawMoulding(
       ctx,
       layout,

@@ -129,7 +129,7 @@ export function drawMoulding(
   material: MaterialShader,
   seed: number,
   caption?: (scale: number) => CaptionMask | null,
-  plaque?: Rect | null,
+  plaque?: { rect: Rect; aged: boolean } | null,
 ): boolean {
   const state = context();
   if (!state) return false;
@@ -213,11 +213,11 @@ export function drawMoulding(
     gl.uniform1f(uniform('u_captionDepth'), onRail ? (material.captionDepth ?? 0) : 0);
     gl.uniform1f(uniform('u_captionBlur'), Math.max(1, w * 0.012));
     gl.uniform1f(uniform('u_captionHalf'), onRail && mask ? (mask.halfWidth + w * 0.15) / w : 0);
-    gl.uniform1f(uniform('u_plaqueHalf'), index === 2 && plaque ? (plaque.width * scale) / 2 / w : 0);
+    gl.uniform1f(uniform('u_plaqueHalf'), index === 2 && plaque ? (plaque.rect.width * scale) / 2 / w : 0);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
   });
 
-  if (plaque) drawPlaque(state, plaque, layout, scale, seed, mask);
+  if (plaque) drawPlaque(state, plaque.rect, plaque.aged, layout, scale, seed, mask);
 
   ctx.save();
   ctx.imageSmoothingEnabled = true;
@@ -228,7 +228,15 @@ export function drawMoulding(
 }
 
 /** The brass plaque, drawn over the rails on the same GL canvas. */
-function drawPlaque(state: Gl, rect: Rect, layout: FrameLayout, scale: number, seed: number, mask: CaptionMask | null): void {
+function drawPlaque(
+  state: Gl,
+  rect: Rect,
+  aged: boolean,
+  layout: FrameLayout,
+  scale: number,
+  seed: number,
+  mask: CaptionMask | null,
+): void {
   const { gl } = state;
   let prog: WebGLProgram;
   try {
@@ -248,6 +256,7 @@ function drawPlaque(state: Gl, rect: Rect, layout: FrameLayout, scale: number, s
   gl.uniform2f(uniform('u_plaque'), w, h);
   gl.uniform1f(uniform('u_seed'), seed);
   gl.uniform1f(uniform('u_scale'), scale);
+  gl.uniform1f(uniform('u_aged'), aged ? 1 : 0);
   gl.uniform1i(uniform('u_caption'), 0);
   gl.uniform1f(uniform('u_captionOn'), mask ? 1 : 0);
   if (mask) gl.uniform4f(uniform('u_captionRect'), mask.rect.x, mask.rect.y, mask.rect.width, mask.rect.height);

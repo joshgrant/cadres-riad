@@ -28,7 +28,7 @@ export interface CaptionStyle {
 export const CAPTION_KIND: Record<FrameId, CaptionKind> = {
   dore: 'engraved',
   noyer: 'plaque',
-  brut: 'burned',
+  brut: 'plaque',
   chene: 'engraved',
   noir: 'engraved',
   blanc: 'engraved',
@@ -58,9 +58,9 @@ export function captionStyle(frame: FrameId, layout: FrameLayout): CaptionStyle 
     return { kind, family: HAND, weight: 500, box, fontSize: rails.bottom * 0.3, letterSpacing: 0, color: 'rgba(28, 32, 58, 0.92)' };
   }
   if (kind === 'plaque') {
-    // Brass plaque: 68% of the rail's height, centred on it; text padded by
-    // 1.2× its cap height plus room for the screws.
-    const height = rails.bottom * 0.68;
+    // Brass plaque: 68% of the rail's height (a smaller plate on Bois brut),
+    // centred on it; text padded by 1.2× its cap height plus room for the screws.
+    const height = rails.bottom * (frame === 'brut' ? 0.56 : 0.68);
     const fontSize = height * 0.42;
     const pad = plaquePadding(height, fontSize);
     const width = outer.width * 0.7 - 2 * pad;
@@ -74,7 +74,7 @@ export function captionStyle(frame: FrameId, layout: FrameLayout): CaptionStyle 
   const colors: Record<FrameId, string> = {
     dore: '#1a140d',
     noyer: '#231c14',
-    brut: '#2a1608',
+    brut: '#1a150f',
     chene: '#6b5136',
     noir: '#3a3633',
     blanc: '#9a948a',

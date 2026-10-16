@@ -19,6 +19,7 @@ uniform sampler2D u_caption;
 uniform vec4 u_captionRect;   // frame-local pixels
 uniform float u_captionOn;
 uniform float u_scale;        // pixels per layout unit
+uniform float u_aged;         // 0: polished, brushed brass with screws; 1: aged brass with rivets
 
 ${NOISE_GLSL}
 ${LIGHTING_GLSL}
@@ -30,7 +31,7 @@ float sdRoundRect(vec2 p, vec2 halfSize, float r) {
 
 vec2 centred(vec2 local) { return local - u_plaque * 0.5; }
 
-float screwRadius() { return u_plaque.y * 0.11; }
+float screwRadius() { return u_plaque.y * mix(0.11, 0.085, u_aged); }
 vec2 screwCentre(float side) {
   return vec2(side * (u_plaque.x * 0.5 - u_plaque.y * 0.3), 0.0);
 }
@@ -49,8 +50,9 @@ float plaqueHeight(vec2 local) {
   float H = u_plaque.y;
   float d = -sdRoundRect(p, u_plaque * 0.5, H * 0.06);
   if (d < 0.0) return 0.0;
-  // Two-step bevel: a steep outer chamfer, then a gentler second step.
+  // Polished: a two-step bevel. Aged: one soft, worn edge.
   float bevel = smoothstep(0.0, H * 0.035, d) * 0.5 + smoothstep(H * 0.035, H * 0.08, d) * 0.5;
+  bevel = mix(bevel, smoothstep(0.0, H * 0.07, d), u_aged);
   float h = 0.04 * bevel;
   for (int i = 0; i < 2; i++) {
     float side = i == 0 ? -1.0 : 1.0;
@@ -62,7 +64,8 @@ float plaqueHeight(vec2 local) {
       float angle = hash21(vec2(side, u_seed)) * 3.14159;
       vec2 axis = vec2(cos(angle), sin(angle));
       float slot = abs(dot(p - c, vec2(-axis.y, axis.x))) / r;
-      dome -= (1.0 - smoothstep(0.08, 0.14, slot)) * 0.03;
+      // Rivets on the aged plate have no slot.
+      dome -= (1.0 - smoothstep(0.08, 0.14, slot)) * 0.03 * (1.0 - u_aged);
       h = max(h, 0.04 + dome);
     }
   }
@@ -103,16 +106,23 @@ void main() {
 
   Surface surface;
   if (text > 0.5) {
-    // Black lacquer fill, glossy.
-    surface = Surface(vec3(0.137, 0.11, 0.078), 0.25, 0.12, 0.0);
+    // Black lacquer fill, glossy (aged: a duller dark fill).
+    surface = Surface(mix(vec3(0.137, 0.11, 0.078), vec3(0.1, 0.085, 0.06), u_aged), mix(0.25, 0.6, u_aged), 0.12, 0.0);
+  } else if (u_aged > 0.5) {
+    // Aged brass: duller, with darker patina in blotches and towards the edges.
+    float patina = smoothstep(0.4, 0.85, fbm(local / H * 1.2 + u_seed * 3.0));
+    float edgeWear = 1.0 - smoothstep(0.0, H * 0.14, -sd);
+    vec3 brass = vec3(0.76, 0.62, 0.38);
+    brass = mix(brass, vec3(0.5, 0.42, 0.27), clamp(patina * 0.35 + edgeWear * 0.35, 0.0, 1.0));
+    surface = Surface(onScrew ? vec3(0.32, 0.26, 0.17) : brass, onScrew ? 0.45 : 0.55, 0.3, 1.0);
   } else {
     vec3 brass = vec3(0.88, 0.72, 0.42) * (0.94 + streak * 0.1);
     float roughness = onScrew ? 0.3 : 0.32 + streak * 0.18;
     surface = Surface(onScrew ? brass * 0.92 : brass, roughness, 0.5, 1.0);
   }
   vec3 color = shade(normal, surface, 0.0);
-  // A soft horizontal highlight band from the brushing.
-  if (text <= 0.5) color += toLinear(vec3(0.95, 0.82, 0.55)) * 0.06 * exp(-pow((p.y / H + 0.12) * 5.0, 2.0)) * (0.7 + streak * 0.6);
+  // A soft horizontal highlight band from the brushing (polished plate only).
+  if (text <= 0.5 && u_aged < 0.5) color += toLinear(vec3(0.95, 0.82, 0.55)) * 0.06 * exp(-pow((p.y / H + 0.12) * 5.0, 2.0)) * (0.7 + streak * 0.6);
 
   vec3 srgb = toSrgb(color);
   // Plate over its own shadow (premultiplied).
