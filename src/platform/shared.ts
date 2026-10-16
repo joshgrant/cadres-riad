@@ -1,7 +1,12 @@
+import { parseRgb, toHex } from '../app/accent';
+
 export const ACCEPTED_IMAGE_TYPES = 'image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif';
 
-export function isMac(): boolean {
-  return /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+export function detectOs(): 'mac' | 'windows' | 'other' {
+  const ua = navigator.userAgent;
+  if (/Windows/.test(ua)) return 'windows';
+  if (/Mac|iPhone|iPad/.test(navigator.platform || ua)) return 'mac';
+  return 'other';
 }
 
 /** The system picker via a detached `<input type="file">`; works in browsers and both webviews. */
@@ -15,4 +20,15 @@ export function pickFiles(options: { multiple: boolean }): Promise<File[]> {
     input.addEventListener('cancel', () => resolve([]), { once: true });
     input.click();
   });
+}
+
+/** CSS `AccentColor`, where the browser exposes the system accent through it. */
+export function cssAccentColor(): string | null {
+  if (!CSS.supports('color', 'AccentColor')) return null;
+  const probe = document.createElement('span');
+  probe.style.color = 'AccentColor';
+  document.body.append(probe);
+  const rgb = parseRgb(getComputedStyle(probe).color);
+  probe.remove();
+  return rgb ? toHex(rgb) : null;
 }

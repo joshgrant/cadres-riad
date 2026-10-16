@@ -43,6 +43,9 @@
   /* Sizes */
   --sidebar-width: 18rem;
   --sidebar-width-compact: 15rem;
+  --toolbar-height: 3.75rem;
+  /* macOS traffic lights: fixed in points, they don't scale with zoom. */
+  --traffic-lights-width: 78px;
   --hit-target: 2.75rem; /* 44px */
   --icon-size: 1.375rem;
   --empty-glyph-size: 3.5rem;

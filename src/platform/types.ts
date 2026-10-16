@@ -4,6 +4,15 @@
  */
 export interface Platform {
   kind: 'web' | 'desktop';
+  os: 'mac' | 'windows' | 'other';
+  /** macOS desktop: content runs under a transparent title bar, beside the traffic lights. */
+  overlayTitleBar: boolean;
+  /** Native material behind the window, shown through the sidebar. */
+  windowMaterial(): Promise<WindowMaterial>;
+  /** The system accent (tint) colour as #rrggbb, or null to keep the default blue. */
+  systemAccent(): Promise<string | null>;
+  /** Photos handed over by the system (dropped on the app icon, Ouvrir avec…). */
+  onOpenedFile(listener: (file: File) => void): void;
   /** Modifier shown in tooltips: ⌘ on macOS, Ctrl elsewhere. */
   modKeyLabel: '⌘' | 'Ctrl';
   /** Model files for background removal; persistent, never evicted. */
@@ -25,3 +34,5 @@ export interface AvailableUpdate {
   version: string;
   install(): Promise<void>;
 }
+
+export type WindowMaterial = 'sidebar' | 'mica' | 'none';

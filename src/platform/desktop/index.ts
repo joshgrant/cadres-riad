@@ -1,8 +1,10 @@
 import { save } from '@tauri-apps/plugin-dialog';
 import { BaseDirectory, exists, mkdir, readFile, writeFile } from '@tauri-apps/plugin-fs';
 import { dirname, join, pictureDir } from '@tauri-apps/api/path';
-import type { ModelStore, Platform } from '../types';
-import { isMac, pickFiles } from '../shared';
+import { invoke } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
+import type { ModelStore, Platform, WindowMaterial } from '../types';
+import { detectOs, pickFiles } from '../shared';
 
 const SAVE_FOLDER_NAME = 'Cadres Riad';
 const LAST_FOLDER_KEY = 'cadres.lastSaveFolder';
@@ -57,7 +59,35 @@ async function defaultFolder(): Promise<string> {
 
 export const desktopPlatform: Platform = {
   kind: 'desktop',
-  modKeyLabel: isMac() ? '⌘' : 'Ctrl',
+  os: detectOs(),
+  overlayTitleBar: detectOs() === 'mac',
+  modKeyLabel: detectOs() === 'mac' ? '⌘' : 'Ctrl',
+  async windowMaterial() {
+    try {
+      return await invoke<WindowMaterial>('window_material');
+    } catch {
+      return 'none';
+    }
+  },
+  async systemAccent() {
+    try {
+      return await invoke<string | null>('system_accent_color');
+    } catch {
+      return null;
+    }
+  },
+  onOpenedFile(listener) {
+    const drain = async () => {
+      const path = await invoke<string | null>('take_opened_path');
+      if (!path) return;
+      const bytes = await invoke<ArrayBuffer>('read_opened_file', { path });
+      const name = path.split(/[\\/]/).pop() ?? 'photo';
+      listener(new File([bytes], name, { type: mimeFromName(name) }));
+    };
+    void listen('open-files', () => void drain());
+    // A file may have arrived before the UI was listening (launched by a drop).
+    void drain();
+  },
   modelStore,
   async saveImage(image, suggestedName, dialogTitle) {
     const folder = readLastFolder() ?? (await defaultFolder());
@@ -77,3 +107,21 @@ export const desktopPlatform: Platform = {
     return null;
   },
 };
+
+function mimeFromName(name: string): string {
+  const ext = name.split('.').pop()?.toLowerCase();
+  switch (ext) {
+    case 'jpg':
+    case 'jpeg':
+      return 'image/jpeg';
+    case 'png':
+      return 'image/png';
+    case 'webp':
+      return 'image/webp';
+    case 'heic':
+    case 'heif':
+      return 'image/heic';
+    default:
+      return '';
+  }
+}

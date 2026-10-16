@@ -26,22 +26,23 @@ export function windowAspect(orientation: Orientation): number {
  * frame's own short side, so solve for the outer size first.
  */
 export function frameProportions(geometry: FrameGeometry, orientation: Orientation) {
-  const aspect = windowAspect(orientation);
+  const aspect = geometry.windowAspect ?? windowAspect(orientation);
   const side = geometry.rail;
+  const top = geometry.topRail ?? geometry.rail;
   const bottom = geometry.bottomRail ?? geometry.rail;
   const windowWidth = aspect;
   const windowHeight = 1;
-  // Outer size if the short side is S: width = ww + 2·side·S, height = wh + (side + bottom)·S.
+  // Outer size if the short side is S: width = ww + 2·side·S, height = wh + (top + bottom)·S.
   // Try each side as the short one and keep the consistent solution.
-  const sIfHeight = windowHeight / (1 - side - bottom);
+  const sIfHeight = windowHeight / (1 - top - bottom);
   const widthIfHeight = windowWidth + 2 * side * sIfHeight;
   const short = widthIfHeight >= sIfHeight ? sIfHeight : windowWidth / (1 - 2 * side);
   const width = windowWidth + 2 * side * short;
-  const height = windowHeight + (side + bottom) * short;
+  const height = windowHeight + (top + bottom) * short;
   return {
     width,
     height,
-    rails: { top: side * short, right: side * short, bottom: bottom * short, left: side * short },
+    rails: { top: top * short, right: side * short, bottom: bottom * short, left: side * short },
   };
 }
 

@@ -1,5 +1,5 @@
 import type { ModelStore, Platform } from '../types';
-import { isMac, pickFiles } from '../shared';
+import { cssAccentColor, detectOs, pickFiles } from '../shared';
 
 const MODEL_CACHE = 'cadres-models-v1';
 
@@ -20,7 +20,18 @@ const modelStore: ModelStore = {
 
 export const webPlatform: Platform = {
   kind: 'web',
-  modKeyLabel: isMac() ? '⌘' : 'Ctrl',
+  os: detectOs(),
+  overlayTitleBar: false,
+  modKeyLabel: detectOs() === 'mac' ? '⌘' : 'Ctrl',
+  async windowMaterial() {
+    return 'none';
+  },
+  async systemAccent() {
+    return cssAccentColor();
+  },
+  onOpenedFile() {
+    // Browsers have no app icon to drop on.
+  },
   modelStore,
   async saveImage(image, suggestedName) {
     const url = URL.createObjectURL(image);

@@ -2,11 +2,17 @@
 
 A French desktop app for macOS and Windows that puts a photo in a luxury, Moroccan-inspired frame, adds a caption and saves a JPEG ready to email. Everything runs on the computer: no server, no account.
 
-Status: **milestone 1 (foundation)**. The editor shell, design system, French strings, preferences, platform adapter and installers are in place. Photo editing, the real frames, background removal and export arrive in later milestones.
+Status: **milestone 2 (editing)**. Open or drop a photo, drag to move it, zoom (buttons, wheel, pinch, keyboard), rotate, undo/redo, and save a 2400px JPEG. The Polaroid is finished; the other frames are flat stand-ins until the WebGL frame renderer (milestone 3). Background removal arrives in milestone 6.
+
+On macOS the toolbar shares the title bar and the sidebar uses the system's translucent sidebar material; on Windows 11 the window uses Mica with a command bar under the title bar (Windows 10 stays opaque). Buttons and selection follow the system accent colour, adjusted where needed to keep text readable.
+
+Reference photos for frame reviews live in `assets/frames/` locally and are git-ignored: they come from the web and must not be published.
 
 ## Installer l’application (pour l’utilisateur)
 
 Téléchargez la dernière version depuis la page **Releases** du dépôt.
+
+**Raccourcis** : glisser pour déplacer la photo ; molette ou pincement pour zoomer ; flèches pour déplacer (Maj : plus loin) ; + et − pour zoomer ; 0 pour recadrer ; Ctrl+Z / Ctrl+Maj+Z (⌘ sur Mac) pour annuler et rétablir ; Ctrl+S (⌘S) pour enregistrer. On peut aussi déposer une photo sur l’icône de l’application.
 
 **Windows 10 ou 11**
 

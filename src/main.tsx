@@ -1,10 +1,41 @@
 import { render } from 'preact';
 import { App } from './app/App';
+import { applyAccent } from './app/accent';
+import { loadPhoto } from './app/actions';
 import { persistPrefs } from './app/prefs';
+import { installShortcuts } from './app/shortcuts';
+import { fontsVersion } from './app/store';
 import { initPlatform } from './platform';
+import '@fontsource/caveat/latin-500.css';
+import '@fontsource/caveat/latin-ext-500.css';
 import './styles/tokens.css';
 import './styles/base.css';
 
-await initPlatform();
+const platform = await initPlatform();
+
+// Platform hooks for CSS: native title bar, window material, flat Windows controls.
+const root = document.documentElement;
+root.dataset.os = platform.os;
+root.dataset.shell = platform.kind;
+if (platform.overlayTitleBar) root.dataset.titlebar = 'overlay';
+root.dataset.material = await platform.windowMaterial();
+
+// Follow the system accent colour; it may change while the app is in the background.
+const refreshAccent = async () => applyAccent(await platform.systemAccent());
+await refreshAccent();
+window.addEventListener('focus', () => void refreshAccent());
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => void refreshAccent());
+
+// Dropping a file outside a drop target must never navigate the window away.
+for (const type of ['dragover', 'drop'] as const) {
+  window.addEventListener(type, (event) => event.preventDefault());
+}
+
 persistPrefs();
+installShortcuts();
+platform.onOpenedFile((file) => void loadPhoto(file));
+
+// Canvas text needs the frame fonts loaded first; redraw once they are.
+void document.fonts.load('500 32px Caveat', 'Riad œ Ā').then(() => fontsVersion.value++);
+
 render(<App />, document.getElementById('app')!);

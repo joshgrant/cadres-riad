@@ -2,9 +2,14 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Permissions for the main window: save dialogs and files in Images › Cadres Riad and the app data folder.",
-  "windows": ["main"],
+  "windows": [
+    "main"
+  ],
   "permissions": [
     "core:default",
+    "core:window:allow-start-dragging",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-internal-toggle-maximize",
     "dialog:allow-save",
     "dialog:allow-open",
     "fs:allow-exists",
@@ -16,10 +21,18 @@
     {
       "identifier": "fs:scope",
       "allow": [
-        { "path": "$PICTURE/Cadres Riad" },
-        { "path": "$PICTURE/Cadres Riad/**" },
-        { "path": "$APPDATA" },
-        { "path": "$APPDATA/**" }
+        {
+          "path": "$PICTURE/Cadres Riad"
+        },
+        {
+          "path": "$PICTURE/Cadres Riad/**"
+        },
+        {
+          "path": "$APPDATA"
+        },
+        {
+          "path": "$APPDATA/**"
+        }
       ]
     }
   ]

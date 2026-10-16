@@ -82,10 +82,10 @@ export function drawPlaceholderFrame(
 }
 
 /** Inner shadow cast by the top rail onto the picture; much fainter on the sides, none at the bottom. */
-export function drawWindowShadow(ctx: CanvasRenderingContext2D, layout: FrameLayout, frame: FrameId): void {
+export function drawWindowShadow(ctx: CanvasRenderingContext2D, layout: FrameLayout, _frame: FrameId): void {
   const { window: inner } = layout;
   if (inner.width <= 0 || inner.height <= 0) return;
-  const topDepth = inner.height * (frame === 'polaroid' ? 0.006 : 0.015);
+  const topDepth = inner.height * 0.015;
   const sideDepth = inner.height * 0.004;
   ctx.save();
   const top = ctx.createLinearGradient(0, inner.y, 0, inner.y + topDepth);

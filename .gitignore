@@ -6,3 +6,6 @@ playwright-report/
 *.local
 # Private spec; describes family members, kept out of the public repo.
 Cadres — spécification de l'éditeur photo.md
+# Reference photos collected from the web: for review comparisons only, never published.
+assets/frames/
+docs/reference/

@@ -31,6 +31,13 @@
   padding: var(--space-2) var(--space-2) 0;
 }
 
+/* macOS: the drawer runs under the title bar; keep its controls clear of the traffic lights. */
+[data-titlebar='overlay'] .drawer__header {
+  min-height: var(--toolbar-height);
+  align-items: center;
+  padding-top: 0;
+}
+
 .drawer__content {
   flex: 1;
   min-height: 0;

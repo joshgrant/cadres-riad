@@ -12,9 +12,10 @@ describe('frameProportions', () => {
         const short = Math.min(width, height);
         expect(rails.left / short).toBeCloseTo(geometry.rail, 10);
         expect(rails.bottom / short).toBeCloseTo(geometry.bottomRail ?? geometry.rail, 10);
+        expect(rails.top / short).toBeCloseTo(geometry.topRail ?? geometry.rail, 10);
         const windowWidth = width - rails.left - rails.right;
         const windowHeight = height - rails.top - rails.bottom;
-        expect(windowWidth / windowHeight).toBeCloseTo(orientation === 'landscape' ? 4 / 3 : 3 / 4, 10);
+        expect(windowWidth / windowHeight).toBeCloseTo(geometry.windowAspect ?? (orientation === 'landscape' ? 4 / 3 : 3 / 4), 10);
       });
     }
   }
@@ -34,5 +35,12 @@ describe('fitFrame', () => {
     const layout = fitFrame({ x: 0, y: 0, width: 0, height: 100 }, FRAME_GEOMETRY.noir, 'portrait');
     expect(layout.frame.width).toBe(0);
     expect(layout.window.height).toBe(0);
+  });
+});
+
+describe('polaroid', () => {
+  it('is an 88 × 107 card with a square picture', () => {
+    const { width, height } = frameProportions(FRAME_GEOMETRY.polaroid, 'portrait');
+    expect(width / height).toBeCloseTo(88 / 107, 10);
   });
 });

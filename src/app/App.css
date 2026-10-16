@@ -6,6 +6,10 @@
   min-height: 26rem;
 }
 
+.app--compact {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .app__sidebar {
   min-height: 0;
   overflow-y: auto;
@@ -14,8 +18,31 @@
   border-right: var(--hairline) solid var(--separator);
 }
 
+/* Only on macOS with the overlay title bar: room for the traffic lights. */
+.app__titlebar-space {
+  display: none;
+}
+
+[data-titlebar='overlay'] .app__titlebar-space {
+  display: block;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  height: var(--toolbar-height);
+  margin-bottom: calc(-1 * var(--space-5));
+}
+
+.editor {
+  container: editor / inline-size;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--bg-canvas);
+}
+
 @media (max-width: 63.99rem) {
-  .app {
+  .app:not(.app--compact) {
     grid-template-columns: var(--sidebar-width-compact) minmax(0, 1fr);
   }
 
@@ -24,8 +51,13 @@
   }
 }
 
-@media (max-width: 47.99rem) {
-  .app {
-    grid-template-columns: minmax(0, 1fr);
-  }
+/*
+ * Native material (macOS vibrancy, Windows 11 Mica) shows through the sidebar.
+ * Without it the window is opaque everywhere.
+ */
+[data-material='sidebar'] body,
+[data-material='mica'] body,
+[data-material='sidebar'] .app__sidebar,
+[data-material='mica'] .app__sidebar {
+  background: transparent;
 }

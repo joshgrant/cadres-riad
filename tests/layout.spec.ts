@@ -21,9 +21,10 @@ async function chromeBoxes(page: Page): Promise<Box[]> {
   return page.evaluate(() => {
     const selectors: Record<string, string> = {
       sidebar: '.app__sidebar',
-      drawerButton: '.canvas-area__drawer-button',
-      controls: '.canvas-area__controls',
+      drawerButton: '.toolbar__drawer-button',
+      controls: '.toolbar .control-group',
       save: '.canvas-area__save',
+      toolbarSave: '.toolbar__save',
       emptyState: '.empty-state__content',
     };
     const boxes: Box[] = [];
@@ -67,8 +68,10 @@ for (const scheme of ['light', 'dark'] as const) {
         const boxes = await chromeBoxes(page);
         const names = boxes.map((box) => box.name);
         expect(names).toEqual(
-          expect.arrayContaining(compact ? ['drawerButton', 'controls', 'save', 'emptyState'] : ['sidebar', 'controls', 'save', 'emptyState']),
+          expect.arrayContaining(compact ? ['drawerButton', 'controls', 'emptyState'] : ['sidebar', 'controls', 'emptyState']),
         );
+        // Exactly one save button is shown: in the canvas, or in the toolbar when narrow.
+        expect(names.filter((name) => name === 'save' || name === 'toolbarSave')).toHaveLength(1);
         for (const box of boxes) {
           expect(box.x, `${box.name} left edge`).toBeGreaterThanOrEqual(0);
           expect(box.x + box.width, `${box.name} right edge`).toBeLessThanOrEqual(viewport.width + 0.5);

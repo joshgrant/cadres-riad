@@ -1,0 +1,19 @@
+{
+  "bundle": {
+    "fileAssociations": [
+      {
+        "ext": [
+          "jpg",
+          "jpeg",
+          "png",
+          "webp",
+          "heic",
+          "heif"
+        ],
+        "name": "Image",
+        "role": "Viewer",
+        "rank": "Alternate"
+      }
+    ]
+  }
+}
