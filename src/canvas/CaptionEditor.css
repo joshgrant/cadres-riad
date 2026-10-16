@@ -1,0 +1,50 @@
+/* The click target over the caption area: invisible until hovered or focused. */
+.caption-editor__target {
+  position: absolute;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: text;
+}
+
+.caption-editor__target:hover {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.caption-editor__target:focus-visible {
+  outline-offset: 0;
+}
+
+/* Shown on the frame only in the editor; the export leaves an empty caption out. */
+.caption-editor__placeholder {
+  white-space: nowrap;
+  line-height: 1;
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.caption-editor__field {
+  position: absolute;
+  min-width: 1ch;
+  line-height: 1;
+  white-space: pre;
+  outline: none;
+  caret-color: var(--accent);
+  cursor: text;
+}
+
+.caption-editor__field.is-shaking {
+  animation: caption-shake 300ms var(--ease-standard);
+}
+
+@keyframes caption-shake {
+  20%,
+  60% {
+    translate: -4px 0;
+  }
+  40%,
+  80% {
+    translate: 4px 0;
+  }
+}

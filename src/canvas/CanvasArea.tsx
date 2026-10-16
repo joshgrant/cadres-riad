@@ -14,6 +14,7 @@ import { DropOverlay } from '../ui/DropOverlay';
 import { HintPill } from '../ui/HintPill';
 import { PrimaryButton } from '../ui/PrimaryButton';
 import { ToastHost } from '../ui/Toast';
+import { CaptionEditor } from './CaptionEditor';
 import { EmptyState } from './EmptyState';
 import { useCanvasSize } from './useCanvasSize';
 import { useGestures } from './useGestures';
@@ -31,6 +32,8 @@ export function CanvasArea() {
   const areaSize = useCanvasSize(area);
   const stageSize = useCanvasSize(stage);
   const [dropActive, setDropActive] = useState(false);
+  // While the caption is being edited, the live field replaces the rendered text.
+  const [editingCaption, setEditingCaption] = useState(false);
 
   const { frame, caption, hintDismissed } = prefs.value;
   const currentOrientation = orientation.value;
@@ -61,10 +64,10 @@ export function CanvasArea() {
     const ctx = layer.getContext('2d');
     if (!ctx) return null;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    drawFrameLayer(ctx, layout, frame, caption);
+    drawFrameLayer(ctx, layout, frame, editingCaption ? '' : caption);
     return layer;
     // Keyed on the values that change the layer; `layout` is derived from them.
-  }, [width, height, dpr, stageSize, frame, currentOrientation, caption, fontsVersion.value]);
+  }, [width, height, dpr, stageSize, frame, currentOrientation, caption, editingCaption, fontsVersion.value]);
 
   // Crossfade frame and orientation changes, so the switch reads as one object changing.
   const shownKey = useRef<string | null>(null);
@@ -143,6 +146,7 @@ export function CanvasArea() {
         />
       )}
       {layout && !current && <EmptyState rect={layout.window} onChoose={() => void choosePhoto()} />}
+      {layout && <CaptionEditor frame={frame} layout={layout} onEditingChange={setEditingCaption} />}
 
       {layout && current && !hintDismissed && (
         <div

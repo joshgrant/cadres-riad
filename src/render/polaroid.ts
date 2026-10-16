@@ -1,4 +1,4 @@
-import { frenchSpacing } from '../i18n/typography';
+import { captionPlacement, captionStyle, fitCaption, fontString } from './caption';
 import type { FrameLayout, Rect } from './layout';
 
 /**
@@ -8,8 +8,6 @@ import type { FrameLayout, Rect } from './layout';
 
 const PAPER = '#f4f3ef';
 const INK = 'rgba(28, 32, 58, 0.92)';
-export const CAPTION_FONT_FAMILY = 'Caveat';
-const CAPTION_WEIGHT = 500;
 
 function cardPath(ctx: CanvasRenderingContext2D, card: Rect): void {
   const radius = card.width * 0.008;
@@ -162,45 +160,24 @@ export function drawPolaroidWindowOverlay(ctx: CanvasRenderingContext2D, layout:
   ctx.restore();
 }
 
-/** The caption's box on the bottom strip, for hit-testing and the editing overlay. */
-export function polaroidCaptionBox(layout: FrameLayout): Rect {
-  const strip = layout.rails.bottom;
-  const { frame } = layout;
-  return {
-    x: frame.x + frame.width * 0.07,
-    y: layout.window.y + layout.window.height + strip * 0.18,
-    width: frame.width * 0.86,
-    height: strip * 0.64,
-  };
-}
-
 function drawCaption(ctx: CanvasRenderingContext2D, layout: FrameLayout, caption: string): void {
-  const text = frenchSpacing(caption.trim());
-  if (!text) return;
-  const box = polaroidCaptionBox(layout);
-  let size = layout.rails.bottom * 0.3;
-  const font = (px: number) => `${CAPTION_WEIGHT} ${px}px ${CAPTION_FONT_FAMILY}, 'Segoe Print', 'Bradley Hand', cursive`;
+  const style = captionStyle('polaroid', layout);
+  const fitted = fitCaption(caption, style);
+  if (!fitted.text) return;
+  const placement = captionPlacement(style, fitted.fontSize);
   ctx.save();
-  ctx.font = font(size);
-  const measured = ctx.measureText(text).width;
-  if (measured > box.width) {
-    size *= box.width / measured;
-    ctx.font = font(size);
-  }
-  // Handwriting sits a little left of centre and is never perfectly level.
-  const cx = box.x + box.width * 0.48;
-  const baseline = box.y + box.height * 0.66;
-  ctx.translate(cx, baseline);
-  ctx.rotate((-0.8 * Math.PI) / 180);
+  ctx.font = fontString(style, fitted.fontSize);
+  ctx.translate(placement.centerX, placement.baseline);
+  ctx.rotate((placement.rotation * Math.PI) / 180);
   ctx.textAlign = 'center';
   ctx.textBaseline = 'alphabetic';
   ctx.fillStyle = INK;
   // Ink bleeds a little into the paper.
   ctx.shadowColor = 'rgba(28, 32, 58, 0.35)';
-  ctx.shadowBlur = size * 0.04 * (ctx.getTransform().a || 1);
-  ctx.fillText(text, 0, 0);
+  ctx.shadowBlur = fitted.fontSize * 0.04 * (ctx.getTransform().a || 1);
+  ctx.fillText(fitted.text, 0, 0);
   ctx.shadowBlur = 0;
-  ctx.fillText(text, 0, 0);
+  ctx.fillText(fitted.text, 0, 0);
   ctx.restore();
 }
 

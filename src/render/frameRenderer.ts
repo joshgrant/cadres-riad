@@ -1,4 +1,7 @@
 import type { FrameId } from '../frames/ids';
+import { MATERIALS, SEEDS } from '../frames/materials';
+import { captionMask, captionStyle } from './caption';
+import { drawMoulding } from './gl/moulding';
 import { drawNeutralBackdrop } from './backdrop';
 import type { FrameLayout } from './layout';
 import { drawPlaceholderFrame, drawWindowShadow } from './placeholderFrame';
@@ -12,8 +15,41 @@ import { photoRect, type View } from './view';
 
 /** Everything that doesn't move while he pans and zooms: shadow, frame, caption. */
 export function drawFrameLayer(ctx: CanvasRenderingContext2D, layout: FrameLayout, frame: FrameId, caption: string): void {
-  if (frame === 'polaroid') drawPolaroidCard(ctx, layout, caption);
-  else drawPlaceholderFrame(ctx, layout, frame, { wallShadow: true });
+  if (frame === 'polaroid') {
+    drawPolaroidCard(ctx, layout, caption);
+    return;
+  }
+  const material = MATERIALS[frame];
+  if (material) {
+    drawWallShadow(ctx, layout);
+    const style = captionStyle(frame, layout);
+    const drawn = drawMoulding(ctx, layout, frame, material, SEEDS[frame], (scale) =>
+      captionMask(layout, style, caption, scale),
+    );
+    if (drawn) return;
+  }
+  drawPlaceholderFrame(ctx, layout, frame, { wallShadow: true });
+}
+
+/** The frame hangs on a wall lit from above: shadow offset down ~1.5%, blur ~4%, ~35% opacity. */
+function drawWallShadow(ctx: CanvasRenderingContext2D, layout: FrameLayout): void {
+  const { frame: outer } = layout;
+  const scale = ctx.getTransform().a || 1;
+  ctx.save();
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
+  ctx.shadowBlur = outer.height * 0.04 * scale;
+  ctx.shadowOffsetY = outer.height * 0.015 * scale;
+  ctx.fillStyle = '#808080';
+  // Inside the frame's outline, so only the shadow shows past its edges.
+  // Narrower at the top, so the shadow reads slightly wider at the bottom corners.
+  ctx.beginPath();
+  ctx.moveTo(outer.x + outer.width * 0.012, outer.y + outer.height * 0.02);
+  ctx.lineTo(outer.x + outer.width * 0.988, outer.y + outer.height * 0.02);
+  ctx.lineTo(outer.x + outer.width - 1 / scale, outer.y + outer.height - 1 / scale);
+  ctx.lineTo(outer.x + 1 / scale, outer.y + outer.height - 1 / scale);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
 }
 
 /** The picture in the window: his photo, or the soft neutral backdrop when there is none. */

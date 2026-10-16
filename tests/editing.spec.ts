@@ -141,3 +141,53 @@ test('save produces a 2400px JPEG named after the caption', async ({ page }) => 
   expect(Math.max(...size)).toBe(2400);
   await expect(page.locator('.toast__body')).toHaveText('Photo enregistrée');
 });
+
+test.describe('caption', () => {
+  const caption = () => page_.evaluate(() => JSON.parse(localStorage.getItem('cadres.prefs.v1') ?? '{}').caption);
+  let page_: Page;
+
+  test.beforeEach(({ page }) => {
+    page_ = page;
+  });
+
+  for (const text of ['Été à Agadir — œuvre de François', 'Noël 2026 !', "L'équipe du Riad"]) {
+    test(`edits in place: ${text}`, async ({ page }) => {
+      await page.getByRole('radio', { name: 'Chêne clair' }).click();
+      await page.getByRole('button', { name: /^Modifier la légende/ }).click();
+      const field = page.getByRole('textbox', { name: 'Cliquer pour modifier la légende' });
+      await expect(field).toBeFocused();
+      await page.keyboard.press('ControlOrMeta+a');
+      await page.keyboard.type(text);
+      await page.keyboard.press('Enter');
+      await expect(field).toHaveCount(0);
+      expect(await caption()).toBe(text.replace("'", '’'));
+      // One undo step brings the old caption back.
+      await page.keyboard.press(`${await mod(page)}+z`);
+      expect(await caption()).toBe('Riad Les Chtis D’Agadir 2026');
+    });
+  }
+
+  test('Escape reverts; empty shows the placeholder', async ({ page }) => {
+    await page.getByRole('button', { name: /^Modifier la légende/ }).click();
+    await page.keyboard.press('ControlOrMeta+a');
+    await page.keyboard.type('Brouillon');
+    await page.keyboard.press('Escape');
+    expect(await caption()).toBe('Riad Les Chtis D’Agadir 2026');
+
+    await page.getByRole('button', { name: /^Modifier la légende/ }).click();
+    await page.keyboard.press('ControlOrMeta+a');
+    await page.keyboard.press('Backspace');
+    await page.keyboard.press('Enter');
+    expect(await caption()).toBe('');
+    await expect(page.getByRole('button', { name: 'Ajouter une légende' })).toBeVisible();
+  });
+
+  test('refuses text that would no longer fit', async ({ page }) => {
+    await page.getByRole('button', { name: /^Modifier la légende/ }).click();
+    await page.keyboard.type(' — et encore beaucoup plus de texte pour remplir');
+    await page.keyboard.press('Enter');
+    const stored: string = await caption();
+    expect(stored.length).toBeLessThanOrEqual(60);
+    expect(stored.startsWith('Riad Les Chtis D’Agadir 2026')).toBe(true);
+  });
+});

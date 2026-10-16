@@ -8,6 +8,10 @@ import { fontsVersion } from './app/store';
 import { initPlatform } from './platform';
 import '@fontsource/caveat/latin-500.css';
 import '@fontsource/caveat/latin-ext-500.css';
+import '@fontsource/cormorant-garamond/latin-600.css';
+import '@fontsource/cormorant-garamond/latin-ext-600.css';
+import '@fontsource/cormorant-garamond/latin-700.css';
+import '@fontsource/cormorant-garamond/latin-ext-700.css';
 import './styles/tokens.css';
 import './styles/base.css';
 
@@ -36,6 +40,10 @@ installShortcuts();
 platform.onOpenedFile((file) => void loadPhoto(file));
 
 // Canvas text needs the frame fonts loaded first; redraw once they are.
-void document.fonts.load('500 32px Caveat', 'Riad œ Ā').then(() => fontsVersion.value++);
+void Promise.all([
+  document.fonts.load('500 32px Caveat', 'Riad œ Ā'),
+  document.fonts.load("600 32px 'Cormorant Garamond'", 'Riad œ Ā'),
+  document.fonts.load("700 32px 'Cormorant Garamond'", 'Riad œ Ā'),
+]).then(() => fontsVersion.value++);
 
 render(<App />, document.getElementById('app')!);

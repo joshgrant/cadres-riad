@@ -48,6 +48,7 @@ const source = {
   'cutout.running': 'Détourage en cours…',
   'caption.placeholder': 'Ajouter une légende',
   'caption.edit': 'Cliquer pour modifier la légende',
+  'caption.aria': 'Modifier la légende : {caption}',
   'caption.default': 'Riad Les Chtis D’Agadir 2026',
   'save.label': 'Enregistrer',
   'save.busy': 'Enregistrement…',
