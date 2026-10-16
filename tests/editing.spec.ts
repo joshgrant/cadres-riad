@@ -191,3 +191,22 @@ test.describe('caption', () => {
     expect(stored.startsWith('Riad Les Chtis D’Agadir 2026')).toBe(true);
   });
 });
+
+test('every frame renders without errors, in both orientations', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error') errors.push(message.text());
+  });
+  page.on('pageerror', (error) => errors.push(error.message));
+  await loadPhoto(page);
+  for (const name of ['Doré sculpté', 'Noyer sculpté', 'Bois brut', 'Chêne clair', 'Noir', 'Blanc', 'Polaroid']) {
+    await page.getByRole('radio', { name }).click();
+    await expect(page.getByRole('radio', { name })).toHaveAttribute('aria-checked', 'true');
+    const rotate = page.getByRole('button', { name: 'Pivoter le cadre' });
+    if (await rotate.isEnabled()) {
+      await rotate.click();
+      await rotate.click();
+    }
+  }
+  expect(errors).toEqual([]);
+});

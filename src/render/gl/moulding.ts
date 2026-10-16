@@ -1,5 +1,6 @@
 import type { FrameLayout, Rect } from '../layout';
 import { VERTEX_GLSL, fragmentShader } from './glsl';
+import { PLAQUE_FRAGMENT } from './plaque';
 
 /**
  * Renders a frame's four mitred rails with a material shader into a shared
@@ -79,13 +80,13 @@ function compile(gl: WebGL2RenderingContext, type: number, source: string): WebG
   return shader;
 }
 
-function program(state: Gl, key: string, material: string): WebGLProgram {
+function program(state: Gl, key: string, fragment: string): WebGLProgram {
   const cached = state.programs.get(key);
   if (cached) return cached;
   const { gl } = state;
   const prog = gl.createProgram()!;
   gl.attachShader(prog, compile(gl, gl.VERTEX_SHADER, VERTEX_GLSL));
-  gl.attachShader(prog, compile(gl, gl.FRAGMENT_SHADER, fragmentShader(material)));
+  gl.attachShader(prog, compile(gl, gl.FRAGMENT_SHADER, fragment));
   gl.bindAttribLocation(prog, 0, 'a_position');
   gl.bindAttribLocation(prog, 1, 'a_local');
   gl.linkProgram(prog);
@@ -126,6 +127,7 @@ export function drawMoulding(
   material: MaterialShader,
   seed: number,
   caption?: (scale: number) => CaptionMask | null,
+  plaque?: Rect | null,
 ): boolean {
   const state = context();
   if (!state) return false;
@@ -142,7 +144,7 @@ export function drawMoulding(
 
   let prog: WebGLProgram;
   try {
-    prog = program(state, key, material.glsl);
+    prog = program(state, key, fragmentShader(material.glsl));
   } catch (error) {
     console.error(error);
     return false;
@@ -204,11 +206,14 @@ export function drawMoulding(
     gl.uniform1f(uniform('u_startMitre'), startRatio);
     gl.uniform1f(uniform('u_endMitre'), endRatio);
     gl.uniform1i(uniform('u_rail'), index);
-    const engraved = mask && index === 2 ? (material.captionDepth ?? 0) : 0;
-    gl.uniform1f(uniform('u_captionDepth'), engraved);
+    const onRail = mask !== null && index === 2;
+    gl.uniform1f(uniform('u_captionOn'), onRail ? 1 : 0);
+    gl.uniform1f(uniform('u_captionDepth'), onRail ? (material.captionDepth ?? 0) : 0);
     gl.uniform1f(uniform('u_captionBlur'), Math.max(1, w * 0.012));
     gl.drawArrays(gl.TRIANGLES, 0, 6);
   });
+
+  if (plaque) drawPlaque(state, plaque, layout, scale, seed, mask);
 
   ctx.save();
   ctx.imageSmoothingEnabled = true;
@@ -216,4 +221,37 @@ export function drawMoulding(
   ctx.drawImage(canvas, frame.x, frame.y, frame.width, frame.height);
   ctx.restore();
   return true;
+}
+
+/** The brass plaque, drawn over the rails on the same GL canvas. */
+function drawPlaque(state: Gl, rect: Rect, layout: FrameLayout, scale: number, seed: number, mask: CaptionMask | null): void {
+  const { gl } = state;
+  let prog: WebGLProgram;
+  try {
+    prog = program(state, 'plaque', PLAQUE_FRAGMENT);
+  } catch (error) {
+    console.error(error);
+    return;
+  }
+  gl.useProgram(prog);
+  const uniform = (name: string) => gl.getUniformLocation(prog, name);
+  gl.uniform2f(uniform('u_size'), state.canvas.width, state.canvas.height);
+  const w = rect.width * scale;
+  const h = rect.height * scale;
+  const x = (rect.x - layout.frame.x) * scale;
+  const y = (rect.y - layout.frame.y) * scale;
+  const m = h * 0.2;
+  gl.uniform2f(uniform('u_plaque'), w, h);
+  gl.uniform1f(uniform('u_seed'), seed);
+  gl.uniform1f(uniform('u_scale'), scale);
+  gl.uniform1i(uniform('u_caption'), 0);
+  gl.uniform1f(uniform('u_captionOn'), mask ? 1 : 0);
+  if (mask) gl.uniform4f(uniform('u_captionRect'), mask.rect.x, mask.rect.y, mask.rect.width, mask.rect.height);
+  const vertex = (px: number, py: number) => [x + px, y + py, px, py];
+  const a = vertex(-m, -m);
+  const b = vertex(w + m, -m);
+  const c = vertex(w + m, h + m);
+  const d = vertex(-m, h + m);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([...a, ...b, ...c, ...a, ...c, ...d]), gl.DYNAMIC_DRAW);
+  gl.drawArrays(gl.TRIANGLES, 0, 6);
 }

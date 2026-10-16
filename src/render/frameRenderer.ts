@@ -1,6 +1,6 @@
 import type { FrameId } from '../frames/ids';
 import { MATERIALS, SEEDS } from '../frames/materials';
-import { captionMask, captionStyle } from './caption';
+import { captionMask, captionStyle, fitCaption, plaqueRect } from './caption';
 import { drawMoulding } from './gl/moulding';
 import { drawNeutralBackdrop } from './backdrop';
 import type { FrameLayout } from './layout';
@@ -13,18 +13,40 @@ import { photoRect, type View } from './view';
  * Layers, back to front: frame layer (cached) → photo → window overlay.
  */
 
+export interface FrameLayerOptions {
+  /** While the caption is being edited the live field shows the text; the plaque still sizes to it. */
+  hideText?: boolean;
+  /** The export leaves an empty caption's plaque out entirely. */
+  forExport?: boolean;
+}
+
 /** Everything that doesn't move while he pans and zooms: shadow, frame, caption. */
-export function drawFrameLayer(ctx: CanvasRenderingContext2D, layout: FrameLayout, frame: FrameId, caption: string): void {
+export function drawFrameLayer(
+  ctx: CanvasRenderingContext2D,
+  layout: FrameLayout,
+  frame: FrameId,
+  caption: string,
+  options: FrameLayerOptions = {},
+): void {
   if (frame === 'polaroid') {
-    drawPolaroidCard(ctx, layout, caption);
+    drawPolaroidCard(ctx, layout, options.hideText ? '' : caption);
     return;
   }
   const material = MATERIALS[frame];
   if (material) {
     drawWallShadow(ctx, layout);
     const style = captionStyle(frame, layout);
-    const drawn = drawMoulding(ctx, layout, frame, material, SEEDS[frame], (scale) =>
-      captionMask(layout, style, caption, scale),
+    const hasText = caption.trim().length > 0;
+    const plaque =
+      style.kind === 'plaque' && (hasText || !options.forExport) ? plaqueRect(layout, style, fitCaption(caption, style)) : null;
+    const drawn = drawMoulding(
+      ctx,
+      layout,
+      frame,
+      material,
+      SEEDS[frame],
+      (scale) => (options.hideText ? null : captionMask(layout, style, caption, scale)),
+      plaque,
     );
     if (drawn) return;
   }

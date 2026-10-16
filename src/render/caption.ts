@@ -57,6 +57,17 @@ export function captionStyle(frame: FrameId, layout: FrameLayout): CaptionStyle 
     const box = polaroidCaptionBox(layout);
     return { kind, family: HAND, weight: 500, box, fontSize: rails.bottom * 0.3, letterSpacing: 0, color: 'rgba(28, 32, 58, 0.92)' };
   }
+  if (kind === 'plaque') {
+    // Brass plaque: 68% of the rail's height, centred on it; text padded by
+    // 1.2× its cap height plus room for the screws.
+    const height = rails.bottom * 0.68;
+    const fontSize = height * 0.42;
+    const pad = plaquePadding(height, fontSize);
+    const width = outer.width * 0.7 - 2 * pad;
+    const centreY = outer.y + outer.height - rails.bottom / 2;
+    const box = { x: outer.x + (outer.width - width) / 2, y: centreY - height / 2, width, height };
+    return { kind, family: SERIF, weight: 600, box, fontSize, letterSpacing: fontSize * 0.04, color: '#231c14' };
+  }
   // Engraved and burned text runs along the bottom rail, 8% clear of each end.
   const margin = outer.width * 0.08;
   const box = { x: outer.x + margin, y: outer.y + outer.height - rails.bottom, width: outer.width - 2 * margin, height: rails.bottom };
@@ -97,6 +108,8 @@ function measure(text: string, style: CaptionStyle, size: number): number {
 export interface FittedCaption {
   text: string;
   fontSize: number;
+  /** Rendered width at fontSize, in layout units. */
+  width: number;
   /** False when even the smallest size overflows: the editor refuses more characters. */
   fits: boolean;
 }
@@ -106,10 +119,23 @@ export function fitCaption(caption: string, style: CaptionStyle): FittedCaption 
   const text = frenchSpacing(caption.trim());
   const nominal = style.fontSize;
   const width = measure(text, style, nominal);
-  if (width <= style.box.width) return { text, fontSize: nominal, fits: true };
+  if (width <= style.box.width) return { text, fontSize: nominal, width, fits: true };
   const size = nominal * (style.box.width / width);
-  if (size >= nominal * MIN_FONT_RATIO) return { text, fontSize: size, fits: true };
-  return { text, fontSize: nominal * MIN_FONT_RATIO, fits: false };
+  if (size >= nominal * MIN_FONT_RATIO) return { text, fontSize: size, width: style.box.width, fits: true };
+  const min = nominal * MIN_FONT_RATIO;
+  return { text, fontSize: min, width: width * MIN_FONT_RATIO, fits: false };
+}
+
+function plaquePadding(height: number, fontSize: number): number {
+  return 1.2 * 0.63 * fontSize + height * 0.42;
+}
+
+/** The plaque itself: as wide as its text needs, between 34% and 70% of the rail. */
+export function plaqueRect(layout: FrameLayout, style: CaptionStyle, fitted: FittedCaption): Rect {
+  const rail = layout.frame.width;
+  const pad = plaquePadding(style.box.height, style.fontSize);
+  const width = Math.min(rail * 0.7, Math.max(rail * 0.34, (fitted.text ? fitted.width : 0) + 2 * pad));
+  return { x: style.box.x + style.box.width / 2 - width / 2, y: style.box.y, width, height: style.box.height };
 }
 
 /**
@@ -121,7 +147,8 @@ export function captionPlacement(style: CaptionStyle, fontSize: number) {
   if (style.kind === 'ink') {
     return { centerX: box.x + box.width * 0.48, baseline: box.y + box.height * 0.66, rotation: -0.8 };
   }
-  return { centerX: box.x + box.width / 2, baseline: box.y + box.height * 0.5 + fontSize * 0.3, rotation: 0 };
+  // Cap height is about 0.63em, so this centres capitals on the rail or plate.
+  return { centerX: box.x + box.width / 2, baseline: box.y + box.height * 0.5 + fontSize * 0.31, rotation: 0 };
 }
 
 /** Distance from the top of a `line-height: 1` box to the baseline, in em, per family. */
@@ -129,22 +156,30 @@ export function baselineRatio(style: CaptionStyle): number {
   return style.kind === 'ink' ? 0.83 : 0.82;
 }
 
-/** Upright text mask for the GL engraving, in frame-local pixels at `scale`. */
+/**
+ * Upright caption mask for the GL frames, in frame-local pixels at `scale`.
+ * Opaque RGB channels: R the sharp text, G a soft halo (6% of the rail
+ * width), B a wide blur (25%) for the smoothed patch under burned text.
+ */
 export function captionMask(layout: FrameLayout, style: CaptionStyle, caption: string, scale: number) {
   const fitted = fitCaption(caption, style);
   if (!fitted.text) return null;
-  const pad = style.box.height * 0.2;
+  const pad = style.box.height * 0.4;
   const rect = {
     x: (style.box.x - layout.frame.x - pad) * scale,
     y: (style.box.y - layout.frame.y) * scale,
     width: (style.box.width + 2 * pad) * scale,
     height: style.box.height * scale,
   };
-  const canvas = document.createElement('canvas');
-  canvas.width = Math.max(1, Math.ceil(rect.width));
-  canvas.height = Math.max(1, Math.ceil(rect.height));
-  const ctx = canvas.getContext('2d');
+  const width = Math.max(1, Math.ceil(rect.width));
+  const height = Math.max(1, Math.ceil(rect.height));
+  const text = document.createElement('canvas');
+  text.width = width;
+  text.height = height;
+  const ctx = text.getContext('2d');
   if (!ctx) return null;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, width, height);
   const size = fitted.fontSize * scale;
   ctx.font = fontString(style, size);
   ctx.letterSpacing = `${style.letterSpacing * (fitted.fontSize / style.fontSize) * scale}px`;
@@ -153,5 +188,48 @@ export function captionMask(layout: FrameLayout, style: CaptionStyle, caption: s
   ctx.fillStyle = '#fff';
   const placement = captionPlacement(style, fitted.fontSize);
   ctx.fillText(fitted.text, (placement.centerX - layout.frame.x) * scale - rect.x, (placement.baseline - layout.frame.y) * scale - rect.y);
+
+  const rail = layout.rails.bottom * scale;
+  const sharp = ctx.getImageData(0, 0, width, height).data;
+  const halo = blurred(text, rail * 0.06);
+  const wide = blurred(text, rail * 0.25);
+  const out = ctx.createImageData(width, height);
+  for (let i = 0; i < out.data.length; i += 4) {
+    out.data[i] = sharp[i]!;
+    out.data[i + 1] = halo[i]!;
+    out.data[i + 2] = wide[i]!;
+    out.data[i + 3] = 255;
+  }
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  canvas.getContext('2d')?.putImageData(out, 0, 0);
   return { canvas, rect };
+}
+
+/**
+ * A blur of roughly `radius` pixels without ctx.filter (missing in older WebKit):
+ * shrink with smoothing, then scale back up, twice.
+ */
+function blurred(source: HTMLCanvasElement, radius: number): Uint8ClampedArray {
+  const { width, height } = source;
+  const factor = Math.max(1, radius / 1.5);
+  const small = document.createElement('canvas');
+  small.width = Math.max(1, Math.round(width / factor));
+  small.height = Math.max(1, Math.round(height / factor));
+  const smallCtx = small.getContext('2d')!;
+  smallCtx.imageSmoothingQuality = 'high';
+  const big = document.createElement('canvas');
+  big.width = width;
+  big.height = height;
+  const bigCtx = big.getContext('2d')!;
+  bigCtx.imageSmoothingQuality = 'high';
+  bigCtx.drawImage(source, 0, 0);
+  for (let pass = 0; pass < 2; pass++) {
+    smallCtx.clearRect(0, 0, small.width, small.height);
+    smallCtx.drawImage(big, 0, 0, small.width, small.height);
+    bigCtx.clearRect(0, 0, width, height);
+    bigCtx.drawImage(small, 0, 0, width, height);
+  }
+  return bigCtx.getImageData(0, 0, width, height).data;
 }

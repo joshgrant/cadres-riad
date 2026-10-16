@@ -75,6 +75,61 @@ float triangleWave(float x) {
 }
 `;
 
+
+export const LIGHTING_GLSL = /* glsl */ `
+vec3 toLinear(vec3 c) { return pow(c, vec3(2.2)); }
+vec3 toSrgb(vec3 c) { return pow(clamp(c, 0.0, 1.0), vec3(1.0 / 2.2)); }
+
+struct Surface {
+  vec3 albedo;
+  float roughness;
+  float specular;
+  float metal;
+};
+
+// A soft studio softbox overhead, seen in reflections on metal.
+vec3 environment(vec3 r) {
+  float overhead = smoothstep(-0.1, 0.75, -r.y) * smoothstep(-0.4, 0.5, r.z);
+  float band = exp(-pow((r.x) * 2.2, 2.0)) * 0.35;
+  float floorBounce = smoothstep(0.2, 0.9, r.y) * 0.12;
+  return vec3(0.07) + vec3(1.0, 0.98, 0.95) * (overhead * (0.75 + band)) + vec3(0.8, 0.85, 0.95) * floorBounce;
+}
+
+
+// One key light from above, tilted 20° towards the viewer; a cool fill from
+// below at 12%; ambient reduced in cavities. Metals reflect the studio. Linear in, linear out.
+vec3 shade(vec3 normal, Surface surface, float cavity) {
+  vec3 albedo = toLinear(surface.albedo);
+  float roughness = surface.roughness;
+  float specular = surface.specular;
+  vec3 keyDir = normalize(vec3(0.0, -0.342, 0.94));
+  vec3 fillDir = normalize(vec3(0.0, 0.5, 0.866));
+  vec3 view = vec3(0.0, 0.0, 1.0);
+  float key = max(dot(normal, keyDir), 0.0);
+  float fill = max(dot(normal, fillDir), 0.0) * 0.12;
+  float ambient = 0.22 * (1.0 - cavity * 0.75);
+  vec3 diffuse = albedo * (key * 0.8 + ambient) + albedo * vec3(0.85, 0.9, 1.0) * fill;
+
+  vec3 halfway = normalize(keyDir + view);
+  // Soft studio light: a broad highlight whose peak grows only gently with gloss.
+  float shininess = mix(160.0, 8.0, roughness);
+  float spec = pow(max(dot(normal, halfway), 0.0), shininess) * specular * mix(3.0, 1.0, roughness);
+  vec3 color = diffuse + vec3(spec) * (1.0 - cavity * 0.8);
+
+  // Metals: tinted reflections of the studio, plus the key light's highlight.
+  if (surface.metal > 0.0) {
+    vec3 reflected = reflect(-view, normal);
+    vec3 env = environment(reflected);
+    // Rougher metal blurs the softbox towards its average.
+    env = mix(env, vec3(0.42), roughness * 0.6);
+    vec3 metalColor = albedo * env * (1.0 - cavity * 0.7) + albedo * spec * 2.0;
+    color = mix(color, metalColor, surface.metal);
+  }
+  return color;
+}
+`;
+
+
 export const VERTEX_GLSL = /* glsl */ `#version 300 es
 in vec2 a_position;   // frame-local device pixels
 in vec2 a_local;      // rail space: x along the rail from its outer start, y across from the outer edge (pixels)
@@ -92,8 +147,10 @@ void main() {
 /**
  * The lighting half of every moulding shader. A material supplies
  *   float frameHeight(vec2 q)            height in rail widths, q in rail widths
- *   void frameSurface(vec2 q, float h, float cavity, out vec3 albedo, out float roughness, out float specular)
+ *   void frameSurface(vec2 q, float h, float cavity, out Surface s)
  *   float frameAlpha(vec2 q)             coverage, 1 for a clean edge
+ *   float jointOffset(vec2 q)            pixels added to the mitre gap (0 for a tight joint)
+ * and may call captionMaskAt(q) / captionCut(q, blurPx) for the caption on the bottom rail.
  */
 export function fragmentShader(material: string): string {
   return /* glsl */ `#version 300 es
@@ -114,29 +171,44 @@ uniform int u_rail;           // 0 top, 1 right, 2 bottom, 3 left
 
 uniform sampler2D u_caption;  // text mask (alpha), drawn upright in image space
 uniform vec4 u_captionRect;   // x, y, w, h in frame-local pixels
-uniform float u_captionDepth; // rail widths; 0 when there is no caption on this rail
+uniform float u_captionOn;    // 1 on the bottom rail when there is a caption mask
+uniform float u_captionDepth; // engraving depth in rail widths (0: the material uses the mask itself)
 uniform float u_captionBlur;  // pixels
 
 ${NOISE_GLSL}
+${LIGHTING_GLSL}
 
 float railLength() { return u_railLength / u_railWidth; }
 
-// Engraving: a soft-walled cut following the caption mask.
-float captionCut(vec2 image) {
-  if (u_captionDepth <= 0.0) return 0.0;
-  vec2 uv = (image - u_captionRect.xy) / u_captionRect.zw;
-  if (uv.x < -0.05 || uv.y < -0.2 || uv.x > 1.05 || uv.y > 1.2) return 0.0;
-  vec2 texel = u_captionBlur / u_captionRect.zw;
-  float sum = 0.0;
-  sum += texture(u_caption, uv).a * 4.0;
-  sum += texture(u_caption, uv + vec2(texel.x, 0.0)).a * 2.0;
-  sum += texture(u_caption, uv - vec2(texel.x, 0.0)).a * 2.0;
-  sum += texture(u_caption, uv + vec2(0.0, texel.y)).a * 2.0;
-  sum += texture(u_caption, uv - vec2(0.0, texel.y)).a * 2.0;
-  sum += texture(u_caption, uv + texel).a;
-  sum += texture(u_caption, uv - texel).a;
-  sum += texture(u_caption, uv + vec2(texel.x, -texel.y)).a;
-  sum += texture(u_caption, uv + vec2(-texel.x, texel.y)).a;
+// Rail space (rail widths) to frame-local image pixels.
+vec2 imageAt(vec2 q) {
+  vec2 delta = (q - v_local / u_railWidth) * u_railWidth;
+  return v_image + delta.x * u_along + delta.y * u_inward;
+}
+
+// The caption mask at q: x sharp text, y soft halo, z wide blur. 0 off the bottom rail.
+vec3 captionMaskAt(vec2 q) {
+  if (u_captionOn < 0.5) return vec3(0.0);
+  vec2 uv = (imageAt(q) - u_captionRect.xy) / u_captionRect.zw;
+  if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) return vec3(0.0);
+  return texture(u_caption, uv).rgb;
+}
+
+// The sharp mask softened by a few pixels, for the walls of an engraved cut.
+float captionCut(vec2 q, float blurPx) {
+  if (u_captionOn < 0.5) return 0.0;
+  vec2 uv = (imageAt(q) - u_captionRect.xy) / u_captionRect.zw;
+  if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) return 0.0;
+  vec2 texel = blurPx / u_captionRect.zw;
+  float sum = texture(u_caption, uv).r * 4.0;
+  sum += texture(u_caption, uv + vec2(texel.x, 0.0)).r * 2.0;
+  sum += texture(u_caption, uv - vec2(texel.x, 0.0)).r * 2.0;
+  sum += texture(u_caption, uv + vec2(0.0, texel.y)).r * 2.0;
+  sum += texture(u_caption, uv - vec2(0.0, texel.y)).r * 2.0;
+  sum += texture(u_caption, uv + texel).r;
+  sum += texture(u_caption, uv - texel).r;
+  sum += texture(u_caption, uv + vec2(texel.x, -texel.y)).r;
+  sum += texture(u_caption, uv + vec2(-texel.x, texel.y)).r;
   return sum / 16.0;
 }
 
@@ -144,12 +216,10 @@ ${material}
 
 // Height including the engraving, sampled in rail space.
 float surfaceHeight(vec2 q) {
-  vec2 image = v_image + ((q - v_local / u_railWidth).x * u_along + (q - v_local / u_railWidth).y * u_inward) * u_railWidth;
-  return frameHeight(q) - captionCut(image) * u_captionDepth;
+  float h = frameHeight(q);
+  if (u_captionDepth > 0.0) h -= captionCut(q, u_captionBlur) * u_captionDepth;
+  return h;
 }
-
-vec3 toLinear(vec3 c) { return pow(c, vec3(2.2)); }
-vec3 toSrgb(vec3 c) { return pow(clamp(c, 0.0, 1.0), vec3(1.0 / 2.2)); }
 
 void main() {
   vec2 q = v_local / u_railWidth;
@@ -172,34 +242,19 @@ void main() {
                   surfaceHeight(q + vec2(0.0, r)) + surfaceHeight(q - vec2(0.0, r))) * 0.25;
   float cavity = clamp((around - h) * 14.0, 0.0, 1.0);
 
-  vec3 albedo;
-  float roughness;
-  float specular;
-  frameSurface(q, h, cavity, albedo, roughness, specular);
-  albedo = toLinear(albedo);
-
-  // One key light from above, tilted 20° towards the viewer; a cool fill from below.
-  vec3 keyDir = normalize(vec3(0.0, -0.342, 0.94));
-  vec3 fillDir = normalize(vec3(0.0, 0.5, 0.866));
-  vec3 view = vec3(0.0, 0.0, 1.0);
-  float key = max(dot(normal, keyDir), 0.0);
-  float fill = max(dot(normal, fillDir), 0.0) * 0.12;
-  float ambient = 0.22 * (1.0 - cavity * 0.75);
-  vec3 diffuse = albedo * (key * 0.8 + ambient) + albedo * vec3(0.85, 0.9, 1.0) * fill;
-
-  vec3 halfway = normalize(keyDir + view);
-  // Soft studio light: a broad highlight whose peak grows only gently with gloss.
-  float shininess = mix(160.0, 8.0, roughness);
-  float spec = pow(max(dot(normal, halfway), 0.0), shininess) * specular * mix(3.0, 1.0, roughness);
-  vec3 color = diffuse + vec3(spec) * (1.0 - cavity * 0.8);
+  Surface surface = Surface(vec3(0.5), 0.5, 0.04, 0.0);
+  frameSurface(q, h, cavity, surface);
+  vec3 color = shade(normal, surface, cavity);
 
   // Hairline mitre joints where the rails meet.
   float s = v_local.x;
   float d = v_local.y;
   float startGap = (s - d * u_startMitre) * 0.7071;
   float endGap = (u_railLength - s - d * u_endMitre) * 0.7071;
-  float joint = min(startGap, endGap);
+  float joint = min(startGap, endGap) - jointOffset(q);
   color *= mix(0.62, 1.0, smoothstep(0.0, 1.2, joint));
+  // An open joint shows the dark gap between the rails.
+  color *= mix(0.25, 1.0, smoothstep(-1.0, 0.0, joint));
 
   outColor = vec4(toSrgb(color) * alpha, alpha);
 }

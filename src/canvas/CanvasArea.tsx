@@ -9,6 +9,7 @@ import { t } from '../i18n/fr';
 import { frenchSpacing } from '../i18n/typography';
 import { platform } from '../platform';
 import { drawFrameLayer, drawWindowContent, drawWindowOverlay } from '../render/frameRenderer';
+import { CAPTION_KIND } from '../render/caption';
 import { fitFrame, type FrameLayout } from '../render/layout';
 import { DropOverlay } from '../ui/DropOverlay';
 import { HintPill } from '../ui/HintPill';
@@ -33,7 +34,7 @@ export function CanvasArea() {
   const stageSize = useCanvasSize(stage);
   const [dropActive, setDropActive] = useState(false);
   // While the caption is being edited, the live field replaces the rendered text.
-  const [editingCaption, setEditingCaption] = useState(false);
+  const [captionDraft, setCaptionDraft] = useState<string | null>(null);
 
   const { frame, caption, hintDismissed } = prefs.value;
   const currentOrientation = orientation.value;
@@ -54,6 +55,9 @@ export function CanvasArea() {
     reclampView();
   }, [windowWidth, windowHeight]);
 
+  // Only the plaque needs the live text while editing (it resizes as he types).
+  const layerCaption = captionDraft === null ? caption : CAPTION_KIND[frame] === 'plaque' ? captionDraft : '';
+
   // The frame layer only changes with the frame, size or caption, never while panning.
   const { width, height, dpr } = areaSize;
   const frameLayer = useMemo(() => {
@@ -64,10 +68,10 @@ export function CanvasArea() {
     const ctx = layer.getContext('2d');
     if (!ctx) return null;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    drawFrameLayer(ctx, layout, frame, editingCaption ? '' : caption);
+    drawFrameLayer(ctx, layout, frame, layerCaption, { hideText: captionDraft !== null });
     return layer;
     // Keyed on the values that change the layer; `layout` is derived from them.
-  }, [width, height, dpr, stageSize, frame, currentOrientation, caption, editingCaption, fontsVersion.value]);
+  }, [width, height, dpr, stageSize, frame, currentOrientation, layerCaption, captionDraft !== null, fontsVersion.value]);
 
   // Crossfade frame and orientation changes, so the switch reads as one object changing.
   const shownKey = useRef<string | null>(null);
@@ -146,7 +150,7 @@ export function CanvasArea() {
         />
       )}
       {layout && !current && <EmptyState rect={layout.window} onChoose={() => void choosePhoto()} />}
-      {layout && <CaptionEditor frame={frame} layout={layout} onEditingChange={setEditingCaption} />}
+      {layout && <CaptionEditor frame={frame} layout={layout} onDraft={setCaptionDraft} />}
 
       {layout && current && !hintDismissed && (
         <div

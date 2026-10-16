@@ -20,8 +20,8 @@ import './CaptionEditor.css';
 interface CaptionEditorProps {
   frame: FrameId;
   layout: FrameLayout;
-  /** Tells the canvas to hide its rendered text while the live field sits on top. */
-  onEditingChange: (editing: boolean) => void;
+  /** The live text while editing, or null: the canvas hides its own text and sizes the plaque to this. */
+  onDraft: (draft: string | null) => void;
 }
 
 /** Collapses pasted or typed line breaks, and applies French quotes and apostrophes. */
@@ -34,7 +34,7 @@ export function cleanCaption(text: string): string {
  * single-line field appears exactly over the rendered text, matched in font,
  * size and position. Enter or a click outside commits; Escape reverts.
  */
-export function CaptionEditor({ frame, layout, onEditingChange }: CaptionEditorProps) {
+export function CaptionEditor({ frame, layout, onDraft }: CaptionEditorProps) {
   const caption = prefs.value.caption;
   const style = captionStyle(frame, layout);
   const [editing, setEditing] = useState(false);
@@ -54,14 +54,14 @@ export function CaptionEditor({ frame, layout, onEditingChange }: CaptionEditorP
     active.current = true;
     setDraft(caption);
     setEditing(true);
-    onEditingChange(true);
+    onDraft(caption);
   };
 
   const finish = (commit: boolean) => {
     if (!active.current) return;
     active.current = false;
     setEditing(false);
-    onEditingChange(false);
+    onDraft(null);
     const next = (field.current?.textContent ?? draft).trim();
     if (commit && next !== caption) step(() => updatePrefs({ caption: next }));
   };
@@ -114,6 +114,7 @@ export function CaptionEditor({ frame, layout, onEditingChange }: CaptionEditorP
       refuse();
     }
     setDraft(element.textContent ?? '');
+    onDraft(element.textContent ?? '');
   };
 
   const onPaste = (event: ClipboardEvent) => {

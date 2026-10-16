@@ -51,7 +51,7 @@ export async function renderExport(input: ExportInput): Promise<Blob> {
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, width, height);
   const layout = fitFrame(frameBox, FRAME_GEOMETRY[input.frame], input.orientation);
-  drawFrameLayer(ctx, layout, input.frame, input.caption);
+  drawFrameLayer(ctx, layout, input.frame, input.caption, { forExport: true });
   drawWindowContent(ctx, layout, input.photo);
   drawWindowOverlay(ctx, layout, input.frame);
 
