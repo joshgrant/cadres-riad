@@ -204,11 +204,23 @@ float carving(vec2 q) {
   return h;
 }
 
+// Under the brass plaque the carving stops and the moulding is planed flat, so
+// the plate sits flush on a level seat (with a little margin around it).
+float plaqueSeat(vec2 q) {
+  if (u_plaqueHalf <= 0.0) return 0.0;
+  float dx = abs(q.x - railLength() * 0.5) - u_plaqueHalf;
+  return 1.0 - smoothstep(0.08, 0.18, dx);
+}
+
 float frameHeight(vec2 q) {
   float t = q.y;
   float face = t < 0.6 ? 0.22 : ogee(t);
   face *= roundEdge(t, 0.035);
-  if (t > BAND_TOP - 0.03 && t < BAND_BOTTOM + 0.03) face += carving(q);
+  float seat = plaqueSeat(q);
+  if (t > BAND_TOP - 0.03 && t < BAND_BOTTOM + 0.03) face += carving(q) * (1.0 - seat);
+  // The seat: level with the face, eased down at the window like the ogee.
+  float level = 0.22 * roundEdge(t, 0.035) * mix(1.0, smoothstep(1.0, 0.86, t) * 0.6 + 0.4, step(0.86, t));
+  if (t < SLIP) face = mix(face, level, seat);
   // The gold slip: a small rounded bead at the window.
   if (t > SLIP) face = 0.06 + 0.025 * roundEdge(t - SLIP, 0.03) * roundEdge(1.0 - t, 0.02);
   vec2 grain = woodGrain(q, u_seed, 9.0);
@@ -246,69 +258,73 @@ float jointOffset(vec2 q) { return 0.0; }
 const brut: MaterialShader = {
   glsl: /* glsl */ `
 ${EDGE_GLSL}
-// Keep knots and holes away from the burned caption.
+// Keep knots and checks away from the burned caption.
 float clearOfCaption(vec2 q) {
-  return 1.0 - smoothstep(0.01, 0.08, captionMaskAt(q).z);
+  return 1.0 - smoothstep(0.001, 0.03, captionMaskAt(q).z);
 }
 
-// A knot or two per rail: centres and the swirl they put into the grain.
+// Now and then a knot: each a different size and shape, swirling the grain around it.
 vec3 knot(vec2 q) {
-  float cell = floor(q.x / 3.2);
-  float present = step(0.45, hash21(vec2(cell, u_seed))) * clearOfCaption(q);
-  vec2 centre = vec2((cell + 0.25 + hash21(vec2(cell, u_seed + 1.0)) * 0.5) * 3.2, 0.25 + hash21(vec2(cell, u_seed + 2.0)) * 0.5);
-  vec2 d = (q - centre) * vec2(0.45, 1.0);
+  const float spacing = 5.5;
+  float cell = floor(q.x / spacing);
+  float present = step(0.55, hash21(vec2(cell, u_seed))) * clearOfCaption(q);
+  vec2 centre = vec2((cell + 0.2 + hash21(vec2(cell, u_seed + 1.0)) * 0.6) * spacing, 0.22 + hash21(vec2(cell, u_seed + 2.0)) * 0.56);
+  float size = 0.6 + hash21(vec2(cell, u_seed + 3.0)) * 0.8;
+  float stretch = 0.3 + hash21(vec2(cell, u_seed + 4.0)) * 0.3;
+  vec2 d = (q - centre) * vec2(stretch, 1.0) / size;
   float r = length(d);
-  return vec3(present * exp(-r * r * 60.0), present * smoothstep(0.08, 0.0, r), r);
+  // x: grain swirl, y: the knot's dark heart.
+  return vec3(present * exp(-r * r * 40.0), present * smoothstep(0.07, 0.03, r), r);
 }
 
-// Grain coordinates, bent around knots and wandering along the board.
+// Grain coordinates: the growth rings drift slowly along the board and bend around knots.
 vec2 grainAt(vec2 q) {
-  vec3 k = knot(q);
-  float bend = k.x * 0.35;
-  return vec2(q.x, q.y + bend + fbm(vec2(q.x * 0.12 + u_seed, q.y)) * 0.25);
+  float bend = knot(q).x * 0.3;
+  return vec2(q.x, q.y + bend + fbm(vec2(q.x * 0.1 + u_seed, q.y * 0.5)) * 0.3);
 }
 
-float nailHoles(vec2 q) {
-  vec2 cell = vec2(floor(q.x / 1.7), 0.0);
-  float present = step(0.6, hash21(cell + u_seed * 3.0)) * clearOfCaption(q);
-  vec2 centre = vec2((cell.x + 0.3 + hash21(cell + 9.0) * 0.4) * 1.7, 0.3 + hash21(cell + 4.0) * 0.4);
-  return present * (1.0 - smoothstep(0.012, 0.022, length(q - centre)));
+// Smooth growth rings for the surface relief (no fine noise, which would sparkle).
+float rings(vec2 q) {
+  float y = grainAt(q).y * 6.0 + u_seed * 3.1;
+  return smoothstep(0.35, 1.0, abs(fract(y) - 0.5) * 2.0);
 }
 
 float checks(vec2 q) {
   // A few soft drying checks running with the grain.
   vec2 g = grainAt(q);
   float line = abs(fract(g.y * 1.7 + 0.3) - 0.5);
-  float present = smoothstep(0.72, 0.8, valueNoise(vec2(q.x * 0.5 + u_seed * 3.0, floor(g.y * 1.7)))) * clearOfCaption(q);
-  return (1.0 - smoothstep(0.0, 0.02, line)) * present;
+  float present = smoothstep(0.74, 0.8, valueNoise(vec2(q.x * 0.4 + u_seed * 3.0, floor(g.y * 1.7)))) * clearOfCaption(q);
+  return (1.0 - smoothstep(0.0, 0.025, line)) * present;
 }
 
 float frameHeight(vec2 q) {
   float t = q.y;
   // Edges worn round by years of handling.
   float base = 0.2 * roundEdge(t, 0.12) * roundEdge(1.0 - t, 0.05);
-  float undulation = (fbm(vec2(q.x * 0.6, q.y * 1.4) + u_seed) - 0.5) * 0.02;
-  vec2 grain = woodGrain(grainAt(q), u_seed, 6.0);
+  // Long, gentle waves along the board, never bumps across it.
+  float undulation = (fbm(vec2(q.x * 0.3 + u_seed, q.y * 0.25)) - 0.5) * 0.012;
   // Weathering wears the soft earlywood away; the latewood stands proud.
-  float raised = grain.x * 0.006;
-  return base + undulation + raised - checks(q) * 0.008 - nailHoles(q) * 0.02 - knot(q).y * 0.004;
+  float raised = rings(q) * 0.004;
+  return base + undulation + raised - checks(q) * 0.006 - knot(q).y * 0.003;
 }
 
 void frameSurface(vec2 q, float h, float cavity, inout Surface surface) {
-  vec2 grain = woodGrain(grainAt(q), u_seed, 6.0);
-  float weather = fbm(q * vec2(0.5, 1.6) + u_seed * 2.0);
-  vec3 albedo = mix(vec3(0.6, 0.42, 0.26), vec3(0.34, 0.21, 0.12), grain.x * 0.75);
-  // Mottled weathering: darker streaks and sun-bleached highs.
-  albedo *= mix(0.62, 1.12, smoothstep(0.25, 0.75, weather));
-  albedo = mix(albedo, vec3(0.72, 0.6, 0.46), smoothstep(0.19, 0.23, h) * 0.25);
-  albedo = mix(albedo, vec3(0.16, 0.09, 0.05), knot(q).y * 0.8 + nailHoles(q));
-  albedo *= 1.0 - checks(q) * 0.5 - cavity * 0.3;
+  vec2 g = grainAt(q);
+  vec2 grain = woodGrain(g, u_seed, 6.0);
+  vec3 albedo = mix(vec3(0.58, 0.41, 0.26), vec3(0.36, 0.23, 0.13), grain.x * 0.7);
+  // Weathering streaks run with the grain: long, soft, darker and lighter bands.
+  float streak = fbm(vec2(q.x * 0.22 + u_seed, g.y * 2.6));
+  albedo *= mix(0.78, 1.08, smoothstep(0.3, 0.7, streak));
+  albedo = mix(albedo, vec3(0.7, 0.58, 0.44), smoothstep(0.19, 0.23, h) * 0.2);
+  // The knot's heart is darker and its rings tighter.
+  albedo = mix(albedo, vec3(0.22, 0.13, 0.07), knot(q).y * 0.75);
+  albedo *= 1.0 - checks(q) * 0.45 - cavity * 0.25;
   // Pyrography: a dark burn with feathered edges and a faint scorched halo.
   float halo = captionMaskAt(q).y;
   float burn = captionCut(q, max(1.0, u_railWidth * 0.006));
   albedo = mix(albedo, vec3(0.36, 0.2, 0.1), clamp(halo * 1.4, 0.0, 1.0) * 0.4);
   albedo = mix(albedo, vec3(0.1, 0.05, 0.025), smoothstep(0.15, 0.7, burn));
-  surface = Surface(albedo, 0.8, 0.025, 0.0);
+  surface = Surface(albedo, 0.85, 0.02, 0.0);
 }
 
 // The outer edge wanders by up to 1.5% of the rail width; the window edge stays straight.

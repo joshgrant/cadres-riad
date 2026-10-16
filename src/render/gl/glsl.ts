@@ -175,6 +175,7 @@ uniform float u_captionOn;    // 1 on the bottom rail when there is a caption ma
 uniform float u_captionDepth; // engraving depth in rail widths (0: the material uses the mask itself)
 uniform float u_captionBlur;  // pixels
 uniform float u_captionHalf;  // half the caption's width plus margin, in rail widths (bottom rail only)
+uniform float u_plaqueHalf;   // half the brass plaque's width, in rail widths (bottom rail only)
 
 ${NOISE_GLSL}
 ${LIGHTING_GLSL}

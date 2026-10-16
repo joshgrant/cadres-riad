@@ -213,6 +213,7 @@ export function drawMoulding(
     gl.uniform1f(uniform('u_captionDepth'), onRail ? (material.captionDepth ?? 0) : 0);
     gl.uniform1f(uniform('u_captionBlur'), Math.max(1, w * 0.012));
     gl.uniform1f(uniform('u_captionHalf'), onRail && mask ? (mask.halfWidth + w * 0.15) / w : 0);
+    gl.uniform1f(uniform('u_plaqueHalf'), index === 2 && plaque ? (plaque.width * scale) / 2 / w : 0);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
   });
 
