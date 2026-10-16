@@ -1,13 +1,13 @@
 import type { FrameId } from '../frames/ids';
 import { FRAME_GEOMETRY } from '../frames/geometry';
 import type { Orientation } from '../app/prefs';
-import { drawFrameLayer, drawWindowContent, drawWindowOverlay } from './frameRenderer';
+import { drawFrameLayer, drawWindowContent, drawWindowOverlay, shadowExtent } from './frameRenderer';
 import { fitFrame, frameProportions } from './layout';
 import type { View } from './view';
 
 export const EXPORT_LONG_EDGE = 2400;
-const SIDE_MARGIN = 0.03; // of the frame's width, sides and top
-const BOTTOM_MARGIN = 0.06; // room for the frame's shadow
+const SIDE_MARGIN = 0.03; // of the frame's width, sides and top, at least
+const BOTTOM_MARGIN = 0.06; // room for the frame's shadow, at least
 const MAX_BYTES = 2 * 1024 * 1024;
 
 export interface ExportInput {
@@ -20,14 +20,19 @@ export interface ExportInput {
 /** Canvas size and frame placement for the export: frame on white, long edge 2400px. */
 export function exportGeometry(frame: FrameId, orientation: Orientation) {
   const unit = frameProportions(FRAME_GEOMETRY[frame], orientation);
-  const unitWidth = unit.width * (1 + 2 * SIDE_MARGIN);
-  const unitHeight = unit.height + unit.width * (SIDE_MARGIN + BOTTOM_MARGIN);
+  // The spec's margins, widened wherever the frame's shadow reaches further.
+  const shadow = shadowExtent(frame, unit);
+  const side = Math.max(unit.width * SIDE_MARGIN, shadow.side);
+  const top = Math.max(unit.width * SIDE_MARGIN, shadow.top);
+  const bottom = Math.max(unit.width * BOTTOM_MARGIN, shadow.bottom);
+  const unitWidth = unit.width + 2 * side;
+  const unitHeight = unit.height + top + bottom;
   const scale = EXPORT_LONG_EDGE / Math.max(unitWidth, unitHeight);
   const width = Math.round(unitWidth * scale);
   const height = Math.round(unitHeight * scale);
   const frameBox = {
-    x: unit.width * SIDE_MARGIN * scale,
-    y: unit.width * SIDE_MARGIN * scale,
+    x: side * scale,
+    y: top * scale,
     width: unit.width * scale,
     height: unit.height * scale,
   };

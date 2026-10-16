@@ -22,10 +22,12 @@ describe('exportGeometry', () => {
       it(`${frame} ${orientation}: long edge is 2400px with the frame inside its margins`, () => {
         const { width, height, frameBox } = exportGeometry(frame, orientation);
         expect(Math.max(width, height)).toBe(EXPORT_LONG_EDGE);
-        expect(frameBox.x).toBeCloseTo(frameBox.width * 0.03);
-        expect(frameBox.x + frameBox.width).toBeLessThanOrEqual(width + 0.5);
-        expect(height - (frameBox.y + frameBox.height)).toBeCloseTo(frameBox.width * 0.06, 0);
+        expect(frameBox.x).toBeGreaterThanOrEqual(frameBox.width * 0.03 - 0.5);
+        expect(frameBox.y).toBeGreaterThanOrEqual(frameBox.width * 0.03 - 0.5);
+        expect(width - (frameBox.x + frameBox.width)).toBeCloseTo(frameBox.x, 0);
+        expect(height - (frameBox.y + frameBox.height)).toBeGreaterThanOrEqual(frameBox.width * 0.06 - 0.5);
       });
     }
   }
 });
+

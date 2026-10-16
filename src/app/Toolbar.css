@@ -1,4 +1,7 @@
 .toolbar {
+  /* Above the canvas, so the capsule's shadow isn't painted over. */
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   gap: var(--space-3);

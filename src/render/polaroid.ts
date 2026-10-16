@@ -17,20 +17,26 @@ function cardPath(ctx: CanvasRenderingContext2D, card: Rect): void {
   ctx.roundRect(card.x, card.y, card.width, card.height, radius);
 }
 
-/** Shadow only, by drawing the shape far off-canvas and offsetting its shadow back. */
-function castShadow(ctx: CanvasRenderingContext2D, draw: () => void, blur: number, offsetY: number, alpha: number): void {
-  const away = 100_000;
+/**
+ * Fills `draw`'s shape with a shadow cast `offsetY` below it. The shape itself
+ * sits under the card, which is painted over it afterwards, so only the shadow shows.
+ */
+function castShadow(ctx: CanvasRenderingContext2D, draw: () => void, blur: number, offsetX: number, offsetY: number, alpha: number): void {
+  // Shadow blur and offset are in device pixels, unaffected by the transform.
+  const scale = ctx.getTransform().a || 1;
   ctx.save();
-  ctx.translate(-away, 0);
   ctx.shadowColor = `rgba(0, 0, 0, ${alpha})`;
-  ctx.shadowBlur = blur;
-  ctx.shadowOffsetX = away * ctx.getTransform().a;
-  ctx.shadowOffsetY = offsetY * ctx.getTransform().d;
-  ctx.fillStyle = '#000';
+  ctx.shadowBlur = blur * scale;
+  ctx.shadowOffsetX = offsetX * scale;
+  ctx.shadowOffsetY = offsetY * scale;
+  ctx.fillStyle = PAPER;
   draw();
   ctx.fill();
   ctx.restore();
 }
+
+/** How far the card's shadow reaches beyond it, as fractions of its width (for export margins). */
+export const POLAROID_SHADOW_EXTENT = { side: 0.045, top: 0.01, bottom: 0.085 };
 
 /** The card, its shadows, texture and caption. Cached; the photo is drawn on top afterwards. */
 export function drawPolaroidCard(ctx: CanvasRenderingContext2D, layout: FrameLayout, caption: string): void {
@@ -39,35 +45,40 @@ export function drawPolaroidCard(ctx: CanvasRenderingContext2D, layout: FrameLay
   const { x, y, width: w, height: h } = card;
   const dpr = ctx.getTransform().a || 1;
 
-  // Contact shadow where the card touches the surface.
-  castShadow(ctx, () => cardPath(ctx, card), h * 0.006 * dpr, h * 0.003, 0.28);
-  // The lower corners curl up, so the shadow there is softer, wider and further away.
+  // Contact shadow along the whole card, where it rests on the surface.
+  castShadow(ctx, () => cardPath(ctx, card), h * 0.008, 0, h * 0.004, 0.3);
+  // The card lifts off the surface: a soft shadow across its full width, falling
+  // further where the curled lower corners stand highest.
   castShadow(
     ctx,
     () => {
+      const inset = w * 0.01;
       ctx.beginPath();
-      ctx.moveTo(x + w * 0.08, y + h * 0.45);
-      ctx.lineTo(x + w * 0.92, y + h * 0.45);
-      ctx.quadraticCurveTo(x + w * 1.0, y + h * 0.9, x + w * 1.012, y + h * 1.008);
-      ctx.quadraticCurveTo(x + w * 0.5, y + h * 0.985, x - w * 0.012, y + h * 1.008);
-      ctx.quadraticCurveTo(x, y + h * 0.9, x + w * 0.08, y + h * 0.45);
+      ctx.moveTo(x + inset, y + h * 0.3);
+      ctx.lineTo(x + w - inset, y + h * 0.3);
+      ctx.lineTo(x + w - inset, y + h - h * 0.01);
+      // The middle of the bottom edge stays closer to the surface than the corners.
+      ctx.quadraticCurveTo(x + w / 2, y + h - h * 0.03, x + inset, y + h - h * 0.01);
+      ctx.closePath();
     },
-    h * 0.035 * dpr,
-    h * 0.018,
-    0.32,
+    h * 0.03,
+    0,
+    h * 0.02,
+    0.3,
   );
-  // Each lifted corner throws its own tighter shadow, out and down.
+  // Each lifted corner throws a slightly wider, softer shadow, out and down.
   for (const side of [-1, 1] as const) {
     const cornerX = side < 0 ? x : x + w;
     castShadow(
       ctx,
       () => {
         ctx.beginPath();
-        ctx.ellipse(cornerX - side * w * 0.06 + side * w * 0.008, y + h * 0.985, w * 0.08, h * 0.02, 0, 0, Math.PI * 2);
+        ctx.ellipse(cornerX - side * w * 0.09, y + h * 0.965, w * 0.08, h * 0.025, 0, 0, Math.PI * 2);
       },
-      h * 0.014 * dpr,
-      h * 0.012,
-      0.3,
+      h * 0.025,
+      side * w * 0.01,
+      h * 0.02,
+      0.16,
     );
   }
 

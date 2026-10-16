@@ -2,7 +2,7 @@ import type { FrameId } from '../frames/ids';
 import { drawNeutralBackdrop } from './backdrop';
 import type { FrameLayout } from './layout';
 import { drawPlaceholderFrame, drawWindowShadow } from './placeholderFrame';
-import { drawPolaroidCard, drawPolaroidWindowOverlay } from './polaroid';
+import { POLAROID_SHADOW_EXTENT, drawPolaroidCard, drawPolaroidWindowOverlay } from './polaroid';
 import { photoRect, type View } from './view';
 
 /**
@@ -42,4 +42,19 @@ export function drawWindowContent(
 export function drawWindowOverlay(ctx: CanvasRenderingContext2D, layout: FrameLayout, frame: FrameId): void {
   if (frame === 'polaroid') drawPolaroidWindowOverlay(ctx, layout);
   else drawWindowShadow(ctx, layout, frame);
+}
+
+/**
+ * How far a frame's shadow reaches past its edges, in the frame's own units,
+ * so the export margin never clips it. Wall shadow: down ~1.5%, blur ~4% of height.
+ */
+export function shadowExtent(frame: FrameId, size: { width: number; height: number }) {
+  if (frame === 'polaroid') {
+    return {
+      side: POLAROID_SHADOW_EXTENT.side * size.width,
+      top: POLAROID_SHADOW_EXTENT.top * size.width,
+      bottom: POLAROID_SHADOW_EXTENT.bottom * size.width,
+    };
+  }
+  return { side: size.height * 0.045, top: size.height * 0.03, bottom: size.height * 0.06 };
 }
