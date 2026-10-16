@@ -4,6 +4,8 @@ import { applyAccent } from './app/accent';
 import { loadPhoto } from './app/actions';
 import { persistPrefs } from './app/prefs';
 import { installShortcuts } from './app/shortcuts';
+import { installBackgrounds } from './app/backgrounds';
+import { installCutout } from './segmentation/cutout';
 import { fontsVersion } from './app/store';
 import { initPlatform } from './platform';
 import '@fontsource/caveat/latin-500.css';
@@ -37,6 +39,8 @@ for (const type of ['dragover', 'drop'] as const) {
 
 persistPrefs();
 installShortcuts();
+installBackgrounds();
+installCutout();
 platform.onOpenedFile((file) => void loadPhoto(file));
 
 // Canvas text needs the frame fonts loaded first; redraw once they are.

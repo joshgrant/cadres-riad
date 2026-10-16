@@ -74,12 +74,21 @@ function drawWallShadow(ctx: CanvasRenderingContext2D, layout: FrameLayout): voi
   ctx.restore();
 }
 
-/** The picture in the window: his photo, or the soft neutral backdrop when there is none. */
-export function drawWindowContent(
-  ctx: CanvasRenderingContext2D,
-  layout: FrameLayout,
-  photo: { image: CanvasImageSource; width: number; height: number; view: View } | null,
-): void {
+export interface WindowPhoto {
+  image: CanvasImageSource;
+  width: number;
+  height: number;
+  view: View;
+  /** With détourage: the people layer (same aspect as the photo) and the background behind them. */
+  cutout?: { image: CanvasImageSource; background: CanvasImageSource | null; backgroundSize?: { width: number; height: number } } | null;
+}
+
+/**
+ * The picture in the window, back to front: the background (or the photo when
+ * détourage is off), then the people layer with its pan and zoom. With no photo,
+ * the soft neutral backdrop.
+ */
+export function drawWindowContent(ctx: CanvasRenderingContext2D, layout: FrameLayout, photo: WindowPhoto | null): void {
   const { window: inner } = layout;
   if (inner.width <= 0 || inner.height <= 0) return;
   if (!photo) {
@@ -92,7 +101,19 @@ export function drawWindowContent(
   ctx.rect(inner.x, inner.y, inner.width, inner.height);
   ctx.clip();
   ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(photo.image, rect.x, rect.y, rect.width, rect.height);
+  if (photo.cutout) {
+    const { background, backgroundSize } = photo.cutout;
+    if (background && backgroundSize) {
+      // The background fills the window: cover, centred, fixed.
+      const cover = photoRect({ cx: 0.5, cy: 0.5, zoom: 1 }, inner, backgroundSize);
+      ctx.drawImage(background, cover.x, cover.y, cover.width, cover.height);
+    } else {
+      drawNeutralBackdrop(ctx, inner.x, inner.y, inner.width, inner.height);
+    }
+    ctx.drawImage(photo.cutout.image, rect.x, rect.y, rect.width, rect.height);
+  } else {
+    ctx.drawImage(photo.image, rect.x, rect.y, rect.width, rect.height);
+  }
   ctx.restore();
 }
 

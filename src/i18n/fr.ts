@@ -46,6 +46,7 @@ const source = {
   'eta.oneMinute': 'environ 1 min restante',
   'eta.minutes': 'environ {n} min restantes',
   'cutout.running': 'Détourage en cours…',
+  'cutout.done': 'Détourage terminé',
   'caption.placeholder': 'Ajouter une légende',
   'caption.edit': 'Cliquer pour modifier la légende',
   'caption.aria': 'Modifier la légende : {caption}',

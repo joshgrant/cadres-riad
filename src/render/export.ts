@@ -3,7 +3,7 @@ import { FRAME_GEOMETRY } from '../frames/geometry';
 import type { Orientation } from '../app/prefs';
 import { drawFrameLayer, drawWindowContent, drawWindowOverlay, shadowExtent } from './frameRenderer';
 import { fitFrame, frameProportions } from './layout';
-import type { View } from './view';
+import type { WindowPhoto } from './frameRenderer';
 
 export const EXPORT_LONG_EDGE = 2400;
 const SIDE_MARGIN = 0.03; // of the frame's width, sides and top, at least
@@ -14,7 +14,7 @@ export interface ExportInput {
   frame: FrameId;
   orientation: Orientation;
   caption: string;
-  photo: { image: CanvasImageSource; width: number; height: number; view: View };
+  photo: WindowPhoto;
 }
 
 /** Canvas size and frame placement for the export: frame on white, long edge 2400px. */

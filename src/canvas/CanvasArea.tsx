@@ -2,18 +2,30 @@ import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'preact/
 import { loadPhoto, reclampView, windowSize } from '../app/actions';
 import { prefs, updatePrefs } from '../app/prefs';
 import { savePhoto, saving } from '../app/save';
-import { fontsVersion, orientation, photo, reducedMotion, view } from '../app/store';
+import {
+  backgroundImage,
+  cutoutActive,
+  cutoutFirstRun,
+  cutoutStatus,
+  fontsVersion,
+  orientation,
+  photo,
+  reducedMotion,
+  view,
+} from '../app/store';
 import { FRAME_GEOMETRY } from '../frames/geometry';
 import { frameNameKey } from '../frames/ids';
 import { t } from '../i18n/fr';
 import { frenchSpacing } from '../i18n/typography';
 import { platform } from '../platform';
 import { drawFrameLayer, drawWindowContent, drawWindowOverlay } from '../render/frameRenderer';
+import { windowPhoto } from '../app/scene';
 import { CAPTION_KIND } from '../render/caption';
 import { fitFrame, type FrameLayout } from '../render/layout';
 import { DropOverlay } from '../ui/DropOverlay';
 import { HintPill } from '../ui/HintPill';
 import { PrimaryButton } from '../ui/PrimaryButton';
+import { ProgressOverlay } from '../ui/ProgressOverlay';
 import { ToastHost } from '../ui/Toast';
 import { CaptionEditor } from './CaptionEditor';
 import { EmptyState } from './EmptyState';
@@ -23,6 +35,7 @@ import './CanvasArea.css';
 
 const FRAME_FADE_MS = 200;
 const ROTATE_FADE_MS = 250;
+const CUTOUT_FADE_MS = 300;
 
 /** The framed photo: drag to pan, zoom, drop to replace, save. */
 export function CanvasArea() {
@@ -73,20 +86,24 @@ export function CanvasArea() {
     // Keyed on the values that change the layer; `layout` is derived from them.
   }, [width, height, dpr, stageSize, frame, currentOrientation, layerCaption, captionDraft !== null, fontsVersion.value]);
 
-  // Crossfade frame and orientation changes, so the switch reads as one object changing.
-  const shownKey = useRef<string | null>(null);
-  const key = `${frame}/${currentOrientation}`;
+  // Crossfade frame, orientation and cut-out changes, so each reads as one object changing.
+  const active = cutoutActive.value;
+  const background = backgroundImage.value;
+  const shown = useRef<{ frame: string; orientation: string; scene: string } | null>(null);
+  const scene = active ? `cutout/${prefs.value.backgroundId}/${background ? 'ready' : 'neutral'}` : 'photo';
 
   useLayoutEffect(() => {
     const element = canvas.current;
     const ctx = element?.getContext('2d');
     if (!element || !ctx || !layout || !frameLayer) return;
 
-    if (shownKey.current && shownKey.current !== key && !reducedMotion.value) {
-      const rotated = shownKey.current.split('/')[0] === frame;
-      fadeOut(element, ghost.current, rotated ? ROTATE_FADE_MS : FRAME_FADE_MS, rotated);
+    const previous = shown.current;
+    if (previous && !reducedMotion.value) {
+      if (previous.frame !== frame) fadeOut(element, ghost.current, FRAME_FADE_MS, false);
+      else if (previous.orientation !== currentOrientation) fadeOut(element, ghost.current, ROTATE_FADE_MS, true);
+      else if (previous.scene !== scene) fadeOut(element, ghost.current, CUTOUT_FADE_MS, false);
     }
-    shownKey.current = key;
+    shown.current = { frame, orientation: currentOrientation, scene };
 
     element.width = frameLayer.width;
     element.height = frameLayer.height;
@@ -94,9 +111,9 @@ export function CanvasArea() {
     ctx.clearRect(0, 0, element.width, element.height);
     ctx.drawImage(frameLayer, 0, 0);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    drawWindowContent(ctx, layout, current ? { image: current.bitmap, width: current.width, height: current.height, view: view.value } : null);
+    drawWindowContent(ctx, layout, windowPhoto(current, active, background));
     drawWindowOverlay(ctx, layout, frame);
-  }, [frameLayer, current, view.value]);
+  }, [frameLayer, current, view.value, active, background]);
 
   const frameName = t(frameNameKey(frame));
   const label = t('canvas.label', { frame: frameName, caption: frenchSpacing(caption) || t('caption.placeholder') });
@@ -151,6 +168,20 @@ export function CanvasArea() {
       )}
       {layout && !current && <EmptyState rect={layout.window} onChoose={() => void choosePhoto()} />}
       {layout && <CaptionEditor frame={frame} layout={layout} onDraft={setCaptionDraft} />}
+
+      {layout && current && cutoutStatus.value === 'running' && !cutoutFirstRun.value && (
+        <div
+          class="canvas-area__progress"
+          style={{
+            left: `${layout.window.x}px`,
+            top: `${layout.window.y}px`,
+            width: `${layout.window.width}px`,
+            height: `${layout.window.height}px`,
+          }}
+        >
+          <ProgressOverlay message={t('cutout.running')} />
+        </div>
+      )}
 
       {layout && current && !hintDismissed && (
         <div

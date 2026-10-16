@@ -6,7 +6,7 @@ import { DEFAULT_VIEW, clampView, panBy, zoomAt, type Size } from '../render/vie
 import { showToast } from '../ui/toastStore';
 import { clearHistory, step } from './history';
 import { prefs, updatePrefs } from './prefs';
-import { photo, view } from './store';
+import { photo, view, viewMode } from './store';
 
 /** Current frame window size in CSS pixels, kept up to date by the canvas. */
 export const windowSize = signal<Size>({ width: 0, height: 0 });
@@ -66,11 +66,22 @@ export async function loadPhoto(file: File): Promise<boolean> {
     showToast({ body: t('error.format'), tone: 'error', duration: 6000 });
     return false;
   }
+  const hash = await sha256(file);
   photo.value?.bitmap.close();
-  photo.value = { bitmap, width: bitmap.width, height: bitmap.height, name: file.name };
+  photo.value = { bitmap, width: bitmap.width, height: bitmap.height, name: file.name, hash };
   view.value = DEFAULT_VIEW;
   clearHistory();
   return true;
+}
+
+async function sha256(file: Blob): Promise<string> {
+  try {
+    const digest = await crypto.subtle.digest('SHA-256', await file.arrayBuffer());
+    return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('');
+  } catch {
+    // Without SubtleCrypto the cache just never hits.
+    return `${file.size}-${Date.now()}-${Math.random()}`;
+  }
 }
 
 function imageSize(): Size | null {
@@ -81,7 +92,7 @@ function imageSize(): Size | null {
 export function zoomBy(factor: number, anchor = { x: 0, y: 0 }): void {
   const image = imageSize();
   if (!image) return;
-  step(() => (view.value = zoomAt(view.value, factor, anchor, windowSize.value, image)));
+  step(() => (view.value = zoomAt(view.value, factor, anchor, windowSize.value, image, viewMode.value)));
 }
 
 /** Pans by a fraction of the window size (keyboard arrows). */
@@ -89,7 +100,7 @@ export function panByFraction(fx: number, fy: number): void {
   const image = imageSize();
   if (!image) return;
   const { width, height } = windowSize.value;
-  step(() => (view.value = panBy(view.value, -fx * width, -fy * height, windowSize.value, image)));
+  step(() => (view.value = panBy(view.value, -fx * width, -fy * height, windowSize.value, image, viewMode.value)));
 }
 
 export function resetView(): void {
@@ -101,7 +112,7 @@ export function resetView(): void {
 export function reclampView(): void {
   const image = imageSize();
   if (!image || windowSize.value.width <= 0) return;
-  const clamped = clampView(view.value, windowSize.value, image);
+  const clamped = clampView(view.value, windowSize.value, image, viewMode.value);
   const current = view.value;
   if (clamped.cx !== current.cx || clamped.cy !== current.cy || clamped.zoom !== current.zoom) view.value = clamped;
 }

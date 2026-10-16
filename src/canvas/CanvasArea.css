@@ -66,3 +66,8 @@
     display: none;
   }
 }
+
+.canvas-area__progress {
+  position: absolute;
+  pointer-events: none;
+}

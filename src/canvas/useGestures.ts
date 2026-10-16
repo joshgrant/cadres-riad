@@ -2,7 +2,7 @@ import { useEffect } from 'preact/hooks';
 import type { RefObject } from 'preact';
 import { windowSize } from '../app/actions';
 import { capture, commit } from '../app/history';
-import { photo, view } from '../app/store';
+import { photo, view, viewMode } from '../app/store';
 import { panBy, zoomAt } from '../render/view';
 import type { Rect } from '../render/layout';
 
@@ -58,12 +58,12 @@ export function useGestures(area: RefObject<HTMLElement | null>, windowRect: () 
       const next = { x: event.clientX, y: event.clientY };
       pointers.set(event.pointerId, next);
       if (pointers.size === 1) {
-        view.value = panBy(view.value, next.x - last.x, next.y - last.y, windowSize.value, size);
+        view.value = panBy(view.value, next.x - last.x, next.y - last.y, windowSize.value, size, viewMode.value);
       } else if (pointers.size === 2 && pinch) {
         const now = twoPointerState();
         if (!now || pinch.distance === 0) return;
-        const moved = panBy(view.value, now.mid.x - pinch.mid.x, now.mid.y - pinch.mid.y, windowSize.value, size);
-        view.value = zoomAt(moved, now.distance / pinch.distance, anchor(now.mid.x, now.mid.y), windowSize.value, size);
+        const moved = panBy(view.value, now.mid.x - pinch.mid.x, now.mid.y - pinch.mid.y, windowSize.value, size, viewMode.value);
+        view.value = zoomAt(moved, now.distance / pinch.distance, anchor(now.mid.x, now.mid.y), windowSize.value, size, viewMode.value);
         pinch = now;
       }
     };
@@ -89,7 +89,7 @@ export function useGestures(area: RefObject<HTMLElement | null>, windowRect: () 
       // Trackpad pinch arrives as a wheel event with ctrlKey; it needs a stronger factor.
       const factor = Math.exp(-event.deltaY * unit * (event.ctrlKey ? 0.01 : 0.0015));
       wheelBefore ??= capture();
-      view.value = zoomAt(view.value, factor, anchor(event.clientX, event.clientY), windowSize.value, size);
+      view.value = zoomAt(view.value, factor, anchor(event.clientX, event.clientY), windowSize.value, size, viewMode.value);
       clearTimeout(wheelTimer);
       wheelTimer = setTimeout(() => {
         if (wheelBefore) commit(wheelBefore);

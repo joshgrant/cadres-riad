@@ -32,3 +32,19 @@
 .sidebar__backgrounds--dimmed .sidebar__background-grid .tile__button:focus-visible .tile__preview {
   opacity: 1;
 }
+
+.sidebar__drop-zone {
+  position: relative;
+}
+
+.sidebar__drop-zone .drop-overlay {
+  inset: calc(-1 * var(--space-2));
+}
+
+/* His backgrounds are named after their files, which can be long. */
+.sidebar__background-grid .tile__label {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

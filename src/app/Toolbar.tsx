@@ -1,7 +1,9 @@
 import { ZOOM_STEP, ZOOM_STEP_LARGE, rotate, zoomBy } from './actions';
 import { prefs } from './prefs';
 import { savePhoto, saving } from './save';
-import { drawerOpen, isCompact, photo } from './store';
+import { downloadProgress, drawerOpen, isCompact, photo } from './store';
+import { step } from './history';
+import { updatePrefs } from './prefs';
 import { FRAME_GEOMETRY } from '../frames/geometry';
 import { t } from '../i18n/fr';
 import { ControlDivider, ControlGroup } from '../ui/ControlGroup';
@@ -46,8 +48,9 @@ export function Toolbar() {
           icon="cutout"
           label={cutout ? t('ctrl.cutout.on') : t('ctrl.cutout.off')}
           pressed={cutout}
-          // Détourage arrives with milestone 6.
-          disabled
+          disabled={!hasPhoto}
+          {...(downloadProgress.value !== undefined ? { progress: downloadProgress.value } : {})}
+          onClick={() => step(() => updatePrefs({ cutout: !cutout }))}
         />
         <ControlDivider />
         <IconButton icon="rotate" label={t('ctrl.rotate')} disabled={portraitOnly} onClick={rotate} />

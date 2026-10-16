@@ -66,3 +66,20 @@ describe('rotate', () => {
     expect(clampView({ cx: 0.3, cy: 0.5, zoom: 1 }, portrait, image).cx).toBeCloseTo(0.3, 1);
   });
 });
+
+describe('free mode (détourage)', () => {
+  it('allows zooming out to 30% and keeps 20% of the people inside the window', () => {
+    const view = clampView({ cx: 5, cy: -5, zoom: 0.1 }, landscape, image, 'free');
+    expect(view.zoom).toBeCloseTo(0.3);
+    const rect = photoRect(view, landscape, image);
+    const visibleWidth = Math.min(rect.x + rect.width, 400) - Math.max(rect.x, 0);
+    const visibleHeight = Math.min(rect.y + rect.height, 300) - Math.max(rect.y, 0);
+    expect(visibleWidth / rect.width).toBeCloseTo(0.2);
+    expect(visibleHeight / rect.height).toBeCloseTo(0.2);
+  });
+
+  it('switching back to cover mode refills the window', () => {
+    const free = clampView({ cx: 0.9, cy: 0.5, zoom: 0.5 }, landscape, image, 'free');
+    expect(clampView(free, landscape, image, 'cover')).toEqual({ cx: 0.5, cy: 0.5, zoom: 1 });
+  });
+});
