@@ -30,6 +30,8 @@ Téléchargez la dernière version depuis la page **Releases** du dépôt.
 
 Les avertissements viennent de ce que l’application n’est pas signée par un certificat payant ; ils ne réapparaissent pas ensuite.
 
+**Mettre à jour** : il n’y a pas de mise à jour automatique. Pour une nouvelle version, installez simplement le nouveau fichier par-dessus l’ancien ; les réglages, les fonds et le modèle de détourage sont conservés.
+
 ## Development
 
 Requirements: Node 22+, and for the desktop app, Rust stable (`rustup default stable`). On macOS also `rustup target add aarch64-apple-darwin x86_64-apple-darwin` for the universal build.
