@@ -133,6 +133,7 @@ test('save produces a 2400px transparent PNG named after the caption', async ({ 
   await page.locator('.canvas-area__save').click();
   const file = await download;
   expect(file.suggestedFilename()).toMatch(/^Riad-Les-Chtis-DAgadir-2026_\d{4}-\d{2}-\d{2}\.png$/);
+  await expect(page.locator('.toast__body')).toHaveText('Photo enregistrée');
   const path = await file.path();
   const [width, height, cornerAlpha] = await page.evaluate(async (bytes) => {
     const bitmap = await createImageBitmap(new Blob([new Uint8Array(bytes)], { type: 'image/png' }));
@@ -146,7 +147,6 @@ test('save produces a 2400px transparent PNG named after the caption', async ({ 
   expect(Math.max(width!, height!)).toBe(2400);
   // No background: the corner is fully transparent.
   expect(cornerAlpha).toBe(0);
-  await expect(page.locator('.toast__body')).toHaveText('Photo enregistrée');
 });
 
 test.describe('caption', () => {
