@@ -36,6 +36,12 @@ export const CAPTION_KIND: Record<FrameId, CaptionKind> = {
 };
 
 const SERIF = "'Cormorant Garamond', 'Times New Roman', serif";
+
+/**
+ * One caption size for every framed (serif) caption, as a fraction of the
+ * frame's short side, so the text reads the same whichever frame he picks.
+ */
+const SERIF_SIZE = 0.038;
 const HAND = "Caveat, 'Segoe Print', 'Bradley Hand', cursive";
 
 /** The Polaroid's caption area on its bottom strip. */
@@ -53,6 +59,7 @@ export function polaroidCaptionBox(layout: FrameLayout): Rect {
 export function captionStyle(frame: FrameId, layout: FrameLayout): CaptionStyle {
   const kind = CAPTION_KIND[frame];
   const { frame: outer, rails } = layout;
+  const serifSize = Math.min(outer.width, outer.height) * SERIF_SIZE;
   if (kind === 'ink') {
     const box = polaroidCaptionBox(layout);
     return { kind, family: HAND, weight: 500, box, fontSize: rails.bottom * 0.3, letterSpacing: 0, color: 'rgba(28, 32, 58, 0.92)' };
@@ -60,8 +67,8 @@ export function captionStyle(frame: FrameId, layout: FrameLayout): CaptionStyle 
   if (kind === 'plaque') {
     // Brass plaque: 68% of the rail's height (a smaller plate on Bois brut),
     // centred on it; text padded by 1.2× its cap height plus room for the screws.
-    const height = rails.bottom * (frame === 'brut' ? 0.56 : 0.68);
-    const fontSize = height * (frame === 'brut' ? 0.5 : 0.42);
+    const height = rails.bottom * (frame === 'brut' ? 0.66 : 0.68);
+    const fontSize = serifSize;
     const pad = plaquePadding(height, fontSize);
     const width = outer.width * 0.7 - 2 * pad;
     const centreY = outer.y + outer.height - rails.bottom / 2;
@@ -85,8 +92,7 @@ export function captionStyle(frame: FrameId, layout: FrameLayout): CaptionStyle 
     family: SERIF,
     weight: kind === 'burned' ? 700 : 600,
     box,
-    // Gold lettering on Noir is set larger so it reads against the dark wood.
-    fontSize: rails.bottom * (frame === 'noir' ? 0.56 : 0.46),
+    fontSize: serifSize,
     letterSpacing: rails.bottom * 0.02,
     color: colors[frame],
   };
