@@ -16,9 +16,11 @@ export interface MaterialShader {
 }
 
 export interface CaptionMask {
-  /** Upright text, white on transparent, in frame-local pixels at render scale. */
+  /** Upright caption mask in frame-local pixels at render scale (see captionMask). */
   canvas: HTMLCanvasElement;
   rect: Rect;
+  /** Half the text's width, in pixels at render scale. */
+  halfWidth: number;
 }
 
 /** Render at twice the target resolution and downsample, for clean fine detail. */
@@ -210,6 +212,7 @@ export function drawMoulding(
     gl.uniform1f(uniform('u_captionOn'), onRail ? 1 : 0);
     gl.uniform1f(uniform('u_captionDepth'), onRail ? (material.captionDepth ?? 0) : 0);
     gl.uniform1f(uniform('u_captionBlur'), Math.max(1, w * 0.012));
+    gl.uniform1f(uniform('u_captionHalf'), onRail && mask ? (mask.halfWidth + w * 0.15) / w : 0);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
   });
 

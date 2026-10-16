@@ -110,7 +110,7 @@ export function Sidebar({ onChosen }: { onChosen?: () => void }) {
                 selected={backgroundId === NEUTRAL_BACKGROUND_ID}
                 onSelect={() => chooseBackground(NEUTRAL_BACKGROUND_ID)}
               >
-                <Thumbnail draw={(ctx, w, h) => drawNeutralBackdrop(ctx, 0, 0, w, h)} deps={[]} />
+                <Thumbnail draw={(ctx, w, h) => drawNeutralBackdrop(ctx, 0, 0, w, h)} deps={['neutral']} />
               </Tile>
               {backgrounds.value.map((background) => (
                 <Tile

@@ -55,9 +55,7 @@ test('the Fond grid is dimmed with a note until détourage is on; a click turns 
   await expect(page.getByText('Activez le détourage pour placer les personnes devant un fond.')).toHaveCount(0);
 });
 
-test('adds a background, selects it, deletes it and undoes the delete', async ({ page, browserName }) => {
-  // Known issue, not yet diagnosed: adding a background fails in headless WebKit.
-  test.fixme(browserName === 'webkit', 'Background add fails in headless WebKit');
+test('adds a background, selects it, deletes it and undoes the delete', async ({ page }) => {
   const chooser = page.waitForEvent('filechooser');
   await page.getByRole('button', { name: 'Ajouter un fond' }).click();
   await (await chooser).setFiles(PHOTO);
@@ -85,4 +83,18 @@ test('saving with détourage includes the background and people', async ({ page 
   const download = page.waitForEvent('download');
   await page.locator('.canvas-area__save').click();
   expect((await download).suggestedFilename()).toMatch(/\.jpg$/);
+});
+
+test('Réinitialiser removes the photo and the background, keeping the frame and caption', async ({ page }) => {
+  await page.getByRole('radio', { name: 'Noir' }).click();
+  const reset = page.getByRole('button', { name: 'Réinitialiser' });
+  await expect(reset).toBeDisabled();
+  await loadPhoto(page);
+  await page.getByRole('button', { name: 'Détourer les personnes' }).click();
+  await expect(reset).toBeEnabled();
+  await reset.click();
+  await expect(page.getByRole('button', { name: 'Choisir une photo' })).toBeVisible();
+  await expect(page.getByRole('radio', { name: 'Neutre' })).toHaveAttribute('aria-checked', 'true');
+  const stored = await prefs(page);
+  expect(stored).toMatchObject({ frame: 'noir', cutout: false, backgroundId: 'neutral' });
 });

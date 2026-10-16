@@ -1,4 +1,4 @@
-import { ZOOM_STEP, ZOOM_STEP_LARGE, rotate, zoomBy } from './actions';
+import { ZOOM_STEP, ZOOM_STEP_LARGE, resetEditor, rotate, zoomBy } from './actions';
 import { prefs } from './prefs';
 import { savePhoto, saving } from './save';
 import { downloadProgress, drawerOpen, isCompact, photo } from './store';
@@ -21,6 +21,8 @@ export function Toolbar() {
   const { cutout, frame } = prefs.value;
   const portraitOnly = FRAME_GEOMETRY[frame].portraitOnly ?? false;
   const drawerTip = useTooltip(t('drawer.open'), { describe: false });
+  const resetTip = useTooltip(t('ctrl.resetHint'));
+  const backgroundChosen = prefs.value.backgroundId !== 'neutral';
 
   return (
     <header class="toolbar" data-tauri-drag-region>
@@ -42,6 +44,17 @@ export function Toolbar() {
           {drawerTip.tooltip}
         </>
       )}
+      <button
+        type="button"
+        class="toolbar__reset"
+        disabled={!hasPhoto && !backgroundChosen}
+        onClick={resetEditor}
+        {...resetTip.trigger}
+      >
+        <Icon name="reset" />
+        <span class="toolbar__reset-label">{t('ctrl.reset')}</span>
+      </button>
+      {resetTip.tooltip}
       <div class="toolbar__spacer" data-tauri-drag-region />
       <ControlGroup label={t('ctrl.group')}>
         <ToggleIconButton

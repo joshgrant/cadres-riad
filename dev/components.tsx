@@ -83,7 +83,7 @@ function Stories({ theme }: { theme: 'light' | 'dark' }) {
           <SidebarSection title={t('section.background')} value={t('bg.neutral')} collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)}>
             <TileGrid label={t('section.background')} after={<AddTile label={t('bg.add')} onClick={() => {}} />}>
               <Tile label={t('bg.neutral')} selected={selected === 'a'} onSelect={() => setSelected('a')}>
-                <Thumbnail draw={neutral} deps={[]} />
+                <Thumbnail draw={neutral} deps={['neutral']} />
               </Tile>
               <Tile
                 label="Plage"

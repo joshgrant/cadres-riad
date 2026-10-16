@@ -6,6 +6,8 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? 'github' : 'list',
+  // Headless browsers render WebGL in software, which is slow when many tests run at once.
+  expect: { timeout: 10_000 },
   use: {
     baseURL: 'http://localhost:4173',
     trace: 'retain-on-failure',

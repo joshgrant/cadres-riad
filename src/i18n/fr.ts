@@ -36,6 +36,8 @@ const source = {
   'ctrl.cutout.off': 'Détourer les personnes',
   'ctrl.cutout.on': 'Détourage activé — cliquer pour désactiver',
   'ctrl.rotate': 'Pivoter le cadre',
+  'ctrl.reset': 'Réinitialiser',
+  'ctrl.resetHint': 'Retirer la photo et le fond',
   'ctrl.zoomIn': 'Zoom avant (Maj : ×2)',
   'ctrl.zoomOut': 'Zoom arrière (Maj : ×2)',
   'download.title': 'Préparation du détourage',

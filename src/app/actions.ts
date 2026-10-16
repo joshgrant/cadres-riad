@@ -5,8 +5,8 @@ import { t } from '../i18n/fr';
 import { DEFAULT_VIEW, clampView, panBy, zoomAt, type Size } from '../render/view';
 import { showToast } from '../ui/toastStore';
 import { clearHistory, step } from './history';
-import { prefs, updatePrefs } from './prefs';
-import { photo, view, viewMode } from './store';
+import { NEUTRAL_BACKGROUND_ID, prefs, updatePrefs } from './prefs';
+import { cutout, photo, view, viewMode } from './store';
 
 /** Current frame window size in CSS pixels, kept up to date by the canvas. */
 export const windowSize = signal<Size>({ width: 0, height: 0 });
@@ -82,6 +82,20 @@ async function sha256(file: Blob): Promise<string> {
     // Without SubtleCrypto the cache just never hits.
     return `${file.size}-${Date.now()}-${Math.random()}`;
   }
+}
+
+/**
+ * Réinitialiser: back to the empty editor, as after a fresh launch. The photo
+ * goes, the background returns to Neutre and détourage turns off; the frame and
+ * caption stay, since they are his usual setup.
+ */
+export function resetEditor(): void {
+  photo.value?.bitmap.close();
+  photo.value = null;
+  cutout.value = null;
+  view.value = DEFAULT_VIEW;
+  updatePrefs({ backgroundId: NEUTRAL_BACKGROUND_ID, cutout: false });
+  clearHistory();
 }
 
 function imageSize(): Size | null {

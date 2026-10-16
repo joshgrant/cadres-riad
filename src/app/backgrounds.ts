@@ -27,13 +27,16 @@ const UNDO_MS = 6000;
 const decoded = new Map<string, Promise<ImageBitmap | null>>();
 const fullImages = new Map<string, Blob>();
 
+/** Backgrounds saved by version 0.2 hold Blobs; newer ones hold bytes. */
+const jpeg = (bytes: ArrayBuffer | Blob) => (bytes instanceof Blob ? bytes : new Blob([bytes], { type: 'image/jpeg' }));
+
 function toTile(stored: StoredBackground): BackgroundTile {
-  return { id: stored.id, name: stored.name, thumbUrl: URL.createObjectURL(stored.thumb) };
+  return { id: stored.id, name: stored.name, thumbUrl: URL.createObjectURL(jpeg(stored.thumb)) };
 }
 
 export async function loadBackgrounds(): Promise<void> {
   const stored = await listBackgrounds();
-  for (const item of stored) fullImages.set(item.id, item.image);
+  for (const item of stored) fullImages.set(item.id, jpeg(item.image));
   backgrounds.value = stored.map(toTile);
   // A saved background that no longer exists falls back to Neutre.
   const selected = prefs.value.backgroundId;
@@ -69,8 +72,8 @@ export async function addBackgrounds(files: File[]): Promise<void> {
         id: `bg-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
         name: file.name.replace(/\.[^.]+$/, ''),
         createdAt: Date.now(),
-        image: await resized(file, FULL_EDGE),
-        thumb: await resized(file, THUMB_EDGE),
+        image: await (await resized(file, FULL_EDGE)).arrayBuffer(),
+        thumb: await (await resized(file, THUMB_EDGE)).arrayBuffer(),
       };
     } catch {
       showToast({ body: t('error.format'), tone: 'error', duration: 6000 });
@@ -87,7 +90,7 @@ export async function addBackgrounds(files: File[]): Promise<void> {
       // Ask the browser not to evict his backgrounds.
       void navigator.storage?.persist?.();
     }
-    fullImages.set(item.id, item.image);
+    fullImages.set(item.id, jpeg(item.image));
     backgrounds.value = [toTile(item), ...backgrounds.value];
     newest = item;
   }
@@ -120,7 +123,7 @@ export async function removeBackground(id: string): Promise<void> {
       run: () => {
         if (!stored) return;
         void putBackground(stored).then(() => {
-          fullImages.set(id, stored.image);
+          fullImages.set(id, jpeg(stored.image));
           const list = [...backgrounds.value];
           list.splice(Math.min(index, list.length), 0, tile);
           backgrounds.value = list;

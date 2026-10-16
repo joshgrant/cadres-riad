@@ -26,7 +26,7 @@ export interface CaptionStyle {
 }
 
 export const CAPTION_KIND: Record<FrameId, CaptionKind> = {
-  dore: 'plaque',
+  dore: 'engraved',
   noyer: 'plaque',
   brut: 'burned',
   chene: 'engraved',
@@ -72,7 +72,7 @@ export function captionStyle(frame: FrameId, layout: FrameLayout): CaptionStyle 
   const margin = outer.width * 0.08;
   const box = { x: outer.x + margin, y: outer.y + outer.height - rails.bottom, width: outer.width - 2 * margin, height: rails.bottom };
   const colors: Record<FrameId, string> = {
-    dore: '#231c14',
+    dore: '#1a140d',
     noyer: '#231c14',
     brut: '#2a1608',
     chene: '#6b5136',
@@ -204,7 +204,7 @@ export function captionMask(layout: FrameLayout, style: CaptionStyle, caption: s
   canvas.width = width;
   canvas.height = height;
   canvas.getContext('2d')?.putImageData(out, 0, 0);
-  return { canvas, rect };
+  return { canvas, rect, halfWidth: (fitted.width / 2) * scale };
 }
 
 /**

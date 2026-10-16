@@ -46,6 +46,12 @@ const paths = {
       <path d="M19 2.5v6M16 5.5h6" />
     </>
   ),
+  reset: (
+    <>
+      <path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3" />
+      <path d="M4.5 4.5v4h4" />
+    </>
+  ),
   sidebar: (
     <>
       <rect x="3" y="4.5" width="18" height="15" rx="2.5" />

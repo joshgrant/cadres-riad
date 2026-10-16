@@ -174,6 +174,7 @@ uniform vec4 u_captionRect;   // x, y, w, h in frame-local pixels
 uniform float u_captionOn;    // 1 on the bottom rail when there is a caption mask
 uniform float u_captionDepth; // engraving depth in rail widths (0: the material uses the mask itself)
 uniform float u_captionBlur;  // pixels
+uniform float u_captionHalf;  // half the caption's width plus margin, in rail widths (bottom rail only)
 
 ${NOISE_GLSL}
 ${LIGHTING_GLSL}
