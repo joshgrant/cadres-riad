@@ -2,7 +2,9 @@
 
 A French desktop app for macOS and Windows that puts a photo in a luxury, Moroccan-inspired frame, adds a caption and saves a JPEG ready to email. Everything runs on the computer: no server, no account.
 
-Status: **milestone 2 (editing)**. Open or drop a photo, drag to move it, zoom (buttons, wheel, pinch, keyboard), rotate, undo/redo, and save a 2400px JPEG. The Polaroid is finished; the other frames are flat stand-ins until the WebGL frame renderer (milestone 3). Background removal arrives in milestone 6.
+Status: **feature-complete for v1, in review**. Seven frames rendered per pixel with WebGL (engraved-brass Doré, carved walnut Noyer, weathered Bois brut, light oak, black-stained oak, tadelakt white, and a paper Polaroid), captions edited in place on the frame (engraved, burned, gilded or handwritten), background removal on the device with a library of his own backgrounds, undo/redo, and a 2400px JPEG export.
+
+Background removal uses `@imgly/background-removal` 1.7.0. The model (about 56–111 MB depending on whether WebGPU is available) downloads once from imgly's CDN the first time détourage is used, then lives in the app data folder (desktop) or Cache Storage (web) and works offline.
 
 On macOS the toolbar shares the title bar and the sidebar uses the system's translucent sidebar material; on Windows 11 the window uses Mica with a command bar under the title bar (Windows 10 stays opaque). Buttons and selection follow the system accent colour, adjusted where needed to keep text readable.
 

@@ -1,5 +1,19 @@
 import { defineConfig } from 'vitest/config';
 import preact from '@preact/preset-vite';
+import type { Plugin } from 'vite';
+
+/**
+ * ONNX Runtime references its WASM next to itself, but the worker hands it the
+ * copy from the model cache instead, so the bundled 24 MB file is never loaded.
+ */
+function dropOnnxWasm(): Plugin {
+  return {
+    name: 'drop-onnx-wasm',
+    generateBundle(_options, bundle) {
+      for (const name of Object.keys(bundle)) if (/ort-wasm.*\.wasm$/.test(name)) delete bundle[name];
+    },
+  };
+}
 
 // Cross-origin isolation, so multi-threaded WASM works in dev and preview
 // exactly as it does inside the Tauri window.
@@ -9,7 +23,8 @@ const isolationHeaders = {
 };
 
 export default defineConfig({
-  plugins: [preact()],
+  plugins: [preact(), dropOnnxWasm()],
+  worker: { format: 'es', plugins: () => [dropOnnxWasm()] },
   clearScreen: false,
   server: { port: 5173, strictPort: true, headers: isolationHeaders },
   preview: { port: 4173, strictPort: true, headers: isolationHeaders },
