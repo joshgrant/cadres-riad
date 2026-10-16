@@ -8,7 +8,6 @@ import type { WindowPhoto } from './frameRenderer';
 export const EXPORT_LONG_EDGE = 2400;
 const SIDE_MARGIN = 0.03; // of the frame's width, sides and top, at least
 const BOTTOM_MARGIN = 0.06; // room for the frame's shadow, at least
-const MAX_BYTES = 2 * 1024 * 1024;
 
 export interface ExportInput {
   frame: FrameId;
@@ -17,7 +16,7 @@ export interface ExportInput {
   photo: WindowPhoto;
 }
 
-/** Canvas size and frame placement for the export: frame on white, long edge 2400px. */
+/** Canvas size and frame placement for the export: long edge 2400px, room all round for the shadow. */
 export function exportGeometry(frame: FrameId, orientation: Orientation) {
   const unit = frameProportions(FRAME_GEOMETRY[frame], orientation);
   // The spec's margins, widened wherever the frame's shadow reaches further.
@@ -39,7 +38,11 @@ export function exportGeometry(frame: FrameId, orientation: Orientation) {
   return { width, height, frameBox };
 }
 
-/** Renders the framed photo with the same renderer as the preview and encodes a JPEG. */
+/**
+ * Renders the framed photo with the same renderer as the preview and encodes a
+ * PNG with a transparent background, so the frame and its soft shadow sit on
+ * whatever the email or viewer shows behind them.
+ */
 export async function renderExport(input: ExportInput): Promise<Blob> {
   await document.fonts.ready;
   const { width, height, frameBox } = exportGeometry(input.frame, input.orientation);
@@ -48,26 +51,18 @@ export async function renderExport(input: ExportInput): Promise<Blob> {
   canvas.height = height;
   const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
   if (!ctx) throw new Error('2D canvas unavailable');
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, width, height);
   const layout = fitFrame(frameBox, FRAME_GEOMETRY[input.frame], input.orientation);
   drawFrameLayer(ctx, layout, input.frame, input.caption, { forExport: true });
   drawWindowContent(ctx, layout, input.photo);
   drawWindowOverlay(ctx, layout, input.frame);
 
   // Canvas encoding drops EXIF, which also removes guests' location data.
-  let blob = await encode(canvas, 0.9);
-  if (blob.size > MAX_BYTES) blob = await encode(canvas, 0.85);
-  return blob;
-}
-
-function encode(canvas: HTMLCanvasElement, quality: number): Promise<Blob> {
   return new Promise((resolve, reject) =>
-    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('JPEG encoding failed'))), 'image/jpeg', quality),
+    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('PNG encoding failed'))), 'image/png'),
   );
 }
 
-/** `Riad-Les-Chtis-DAgadir-2026_2026-10-16.jpg`: caption slug plus today's date. */
+/** `Riad-Les-Chtis-DAgadir-2026_2026-10-16.png`: caption slug plus today's date. */
 export function exportFileName(caption: string, date = new Date()): string {
   const day = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   const slug = caption
@@ -80,5 +75,5 @@ export function exportFileName(caption: string, date = new Date()): string {
     .replace(/['’‘`]/g, '')
     .replace(/[^A-Za-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
-  return `${slug || 'photo-encadree'}_${day}.jpg`;
+  return `${slug || 'photo-encadree'}_${day}.png`;
 }

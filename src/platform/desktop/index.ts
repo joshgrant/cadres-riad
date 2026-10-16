@@ -94,7 +94,7 @@ export const desktopPlatform: Platform = {
     const path = await save({
       title: dialogTitle,
       defaultPath: await join(folder, suggestedName),
-      filters: [{ name: 'JPEG', extensions: ['jpg', 'jpeg'] }],
+      filters: [{ name: 'PNG', extensions: ['png'] }],
     });
     if (!path) return false;
     await writeFile(path, new Uint8Array(await image.arrayBuffer()));

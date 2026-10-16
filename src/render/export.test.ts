@@ -5,14 +5,14 @@ import { EXPORT_LONG_EDGE, exportFileName, exportGeometry } from './export';
 describe('exportFileName', () => {
   const date = new Date(2026, 9, 16);
   it('slugs the caption and strips accents and apostrophes', () => {
-    expect(exportFileName('Riad Les Chtis D’Agadir 2026', date)).toBe('Riad-Les-Chtis-DAgadir-2026_2026-10-16.jpg');
-    expect(exportFileName('Été à Agadir — œuvre de François', date)).toBe('Ete-a-Agadir-oeuvre-de-Francois_2026-10-16.jpg');
-    expect(exportFileName('Noël 2026 !', date)).toBe('Noel-2026_2026-10-16.jpg');
+    expect(exportFileName('Riad Les Chtis D’Agadir 2026', date)).toBe('Riad-Les-Chtis-DAgadir-2026_2026-10-16.png');
+    expect(exportFileName('Été à Agadir — œuvre de François', date)).toBe('Ete-a-Agadir-oeuvre-de-Francois_2026-10-16.png');
+    expect(exportFileName('Noël 2026 !', date)).toBe('Noel-2026_2026-10-16.png');
   });
 
   it('falls back when the caption is empty', () => {
-    expect(exportFileName('', date)).toBe('photo-encadree_2026-10-16.jpg');
-    expect(exportFileName(' !? ', date)).toBe('photo-encadree_2026-10-16.jpg');
+    expect(exportFileName('', date)).toBe('photo-encadree_2026-10-16.png');
+    expect(exportFileName(' !? ', date)).toBe('photo-encadree_2026-10-16.png');
   });
 });
 

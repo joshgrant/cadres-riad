@@ -9,7 +9,7 @@ import { windowPhoto } from './scene';
 
 export const saving = signal(false);
 
-/** “Enregistrer”: renders the 2400px JPEG and hands it to the platform's save. */
+/** “Enregistrer”: renders the 2400px PNG and hands it to the platform's save. */
 export async function savePhoto(): Promise<void> {
   const current = photo.value;
   if (!current || saving.value) return;

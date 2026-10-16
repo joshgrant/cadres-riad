@@ -64,13 +64,14 @@ function drawWallShadow(ctx: CanvasRenderingContext2D, layout: FrameLayout): voi
   ctx.shadowBlur = outer.height * 0.04 * scale;
   ctx.shadowOffsetY = outer.height * 0.015 * scale;
   ctx.fillStyle = '#808080';
-  // Inside the frame's outline, so only the shadow shows past its edges.
-  // Narrower at the top, so the shadow reads slightly wider at the bottom corners.
+  // Well inside the frame's outline (rough edges included), so only the shadow
+  // shows past it; narrower at the top, so it reads wider at the bottom corners.
+  const inset = Math.min(layout.rails.left, layout.rails.bottom) * 0.15;
   ctx.beginPath();
-  ctx.moveTo(outer.x + outer.width * 0.012, outer.y + outer.height * 0.02);
-  ctx.lineTo(outer.x + outer.width * 0.988, outer.y + outer.height * 0.02);
-  ctx.lineTo(outer.x + outer.width - 1 / scale, outer.y + outer.height - 1 / scale);
-  ctx.lineTo(outer.x + 1 / scale, outer.y + outer.height - 1 / scale);
+  ctx.moveTo(outer.x + outer.width * 0.012 + inset, outer.y + outer.height * 0.02 + inset);
+  ctx.lineTo(outer.x + outer.width * 0.988 - inset, outer.y + outer.height * 0.02 + inset);
+  ctx.lineTo(outer.x + outer.width - inset, outer.y + outer.height - inset);
+  ctx.lineTo(outer.x + inset, outer.y + outer.height - inset);
   ctx.closePath();
   ctx.fill();
   ctx.restore();

@@ -82,7 +82,7 @@ test('saving with détourage includes the background and people', async ({ page 
   await expect(page.getByRole('button', { name: /^Détourage activé/ })).toBeVisible();
   const download = page.waitForEvent('download');
   await page.locator('.canvas-area__save').click();
-  expect((await download).suggestedFilename()).toMatch(/\.jpg$/);
+  expect((await download).suggestedFilename()).toMatch(/\.png$/);
 });
 
 test('Réinitialiser removes the photo and the background, keeping the frame and caption', async ({ page }) => {

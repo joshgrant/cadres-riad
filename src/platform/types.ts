@@ -17,7 +17,7 @@ export interface Platform {
   modKeyLabel: '⌘' | 'Ctrl';
   /** Model files for background removal; persistent, never evicted. */
   modelStore: ModelStore;
-  /** Saves a finished JPEG. Resolves to false if he cancelled the dialog. */
+  /** Saves the finished PNG. Resolves to false if he cancelled the dialog. */
   saveImage(image: Blob, suggestedName: string, dialogTitle: string): Promise<boolean>;
   /** Opens the system file picker for images. Resolves to [] if cancelled. */
   openImages(options: { multiple: boolean }): Promise<File[]>;
