@@ -1,0 +1,66 @@
+/* Over the drawn logo: invisible until hovered, focused or selected. */
+.logo-editor {
+  position: absolute;
+  border-radius: 1px;
+  cursor: move;
+  touch-action: none;
+}
+
+.logo-editor:hover {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.logo-editor:focus-visible {
+  outline-offset: 0;
+}
+
+.logo-editor.is-selected {
+  outline: 1.5px solid var(--accent);
+  outline-offset: 0;
+  box-shadow: none;
+}
+
+/* A small square to see, inside a touch-sized target. */
+.logo-editor__handle {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  margin: -1rem;
+  touch-action: none;
+}
+
+.logo-editor__handle::after {
+  content: '';
+  width: 0.625rem;
+  height: 0.625rem;
+  border: 1.5px solid var(--accent);
+  border-radius: 2px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.logo-editor__handle--nw {
+  top: 0;
+  left: 0;
+  cursor: nwse-resize;
+}
+
+.logo-editor__handle--ne {
+  top: 0;
+  right: 0;
+  cursor: nesw-resize;
+}
+
+.logo-editor__handle--sw {
+  bottom: 0;
+  left: 0;
+  cursor: nesw-resize;
+}
+
+.logo-editor__handle--se {
+  right: 0;
+  bottom: 0;
+  cursor: nwse-resize;
+}

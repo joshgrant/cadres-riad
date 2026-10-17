@@ -104,7 +104,7 @@ for (const scheme of ['light', 'dark'] as const) {
           seen.add(name);
         }
         const expected = compact
-          ? ['Cadre et fond', 'Pivoter le cadre', 'Choisir une photo']
+          ? ['Cadre, fond et logo', 'Pivoter le cadre', 'Choisir une photo']
           : ['CadreDoré sculpté', 'FondNeutre', 'Doré sculpté', 'Neutre', 'Ajouter un fond', 'Pivoter le cadre', 'Choisir une photo'];
         for (const name of expected) expect([...seen], name).toContain(name);
       });
@@ -116,9 +116,9 @@ for (const scheme of ['light', 'dark'] as const) {
 
       if (compact) {
         test('drawer opens, traps focus, closes on Escape', async ({ page }) => {
-          const opener = page.getByRole('button', { name: 'Cadre et fond' });
+          const opener = page.getByRole('button', { name: 'Cadre, fond et logo' });
           await opener.click();
-          const dialog = page.getByRole('dialog', { name: 'Cadre et fond' });
+          const dialog = page.getByRole('dialog', { name: 'Cadre, fond et logo' });
           await expect(dialog).toBeVisible();
           await expect(dialog.locator(':focus')).toHaveCount(1);
           for (let i = 0; i < 12; i++) {

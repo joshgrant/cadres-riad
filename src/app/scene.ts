@@ -1,7 +1,8 @@
 import type { WindowPhoto } from '../render/frameRenderer';
-import { cutout, view, type Photo } from './store';
+import { prefs } from './prefs';
+import { cutout, logoImage, view, type Photo } from './store';
 
-/** What the window shows: the photo, or with détourage the background and the people. */
+/** What the window shows: the photo, or with détourage the background and the people; then the logo. */
 export function windowPhoto(
   current: Photo | null,
   active: boolean,
@@ -9,6 +10,7 @@ export function windowPhoto(
 ): WindowPhoto | null {
   if (!current) return null;
   const people = active ? cutout.value : null;
+  const logo = logoImage.value;
   return {
     image: current.bitmap,
     width: current.width,
@@ -17,6 +19,7 @@ export function windowPhoto(
     cutout: people
       ? { image: people.bitmap, background, ...(background ? { backgroundSize: { width: background.width, height: background.height } } : {}) }
       : null,
+    logo: logo ? { image: logo, aspect: logo.width / logo.height, placement: prefs.value.logo } : null,
   };
 }
 

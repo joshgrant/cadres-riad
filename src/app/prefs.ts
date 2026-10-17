@@ -1,6 +1,7 @@
 import { effect, signal } from '@preact/signals';
 import { type FrameId, isFrameId } from '../frames/ids';
 import { messages } from '../i18n/fr';
+import { DEFAULT_LOGO_PLACEMENT, type LogoPlacement } from '../render/logo';
 
 /** Shared settings that survive relaunches. The photo itself is never kept. */
 export interface Prefs {
@@ -11,7 +12,10 @@ export interface Prefs {
   backgroundId: string;
   cutout: boolean;
   caption: string;
-  collapsed: { frame: boolean; background: boolean };
+  /** 'none', a built-in logo's id, or an id from the logos store. */
+  logoId: string;
+  logo: LogoPlacement;
+  collapsed: { frame: boolean; background: boolean; logo: boolean };
   hintDismissed: boolean;
 }
 
@@ -19,6 +23,8 @@ export type Orientation = 'landscape' | 'portrait';
 
 export const PREFS_KEY = 'cadres.prefs.v1';
 export const NEUTRAL_BACKGROUND_ID = 'neutral';
+export const NO_LOGO_ID = 'none';
+export const DEFAULT_LOGO_ID = 'default';
 const CURRENT_VERSION = 1;
 
 export function defaultPrefs(): Prefs {
@@ -29,7 +35,9 @@ export function defaultPrefs(): Prefs {
     backgroundId: NEUTRAL_BACKGROUND_ID,
     cutout: false,
     caption: messages['caption.default'],
-    collapsed: { frame: false, background: false },
+    logoId: DEFAULT_LOGO_ID,
+    logo: { ...DEFAULT_LOGO_PLACEMENT },
+    collapsed: { frame: false, background: false, logo: false },
     hintDismissed: false,
   };
 }
@@ -57,12 +65,22 @@ export function parsePrefs(raw: string | null): Prefs {
     backgroundId: typeof data.backgroundId === 'string' && data.backgroundId ? data.backgroundId : defaults.backgroundId,
     cutout: typeof data.cutout === 'boolean' ? data.cutout : defaults.cutout,
     caption: typeof data.caption === 'string' ? data.caption.slice(0, 60) : defaults.caption,
+    logoId: typeof data.logoId === 'string' && data.logoId ? data.logoId : defaults.logoId,
+    logo: isPlacement(data.logo) ? { x: data.logo.x, y: data.logo.y, width: data.logo.width } : defaults.logo,
     collapsed: {
       frame: typeof collapsed.frame === 'boolean' ? collapsed.frame : defaults.collapsed.frame,
       background: typeof collapsed.background === 'boolean' ? collapsed.background : defaults.collapsed.background,
+      logo: typeof collapsed.logo === 'boolean' ? collapsed.logo : defaults.collapsed.logo,
     },
     hintDismissed: typeof data.hintDismissed === 'boolean' ? data.hintDismissed : defaults.hintDismissed,
   };
+}
+
+/** Fractions of the window; the canvas clamps them to the logo's real size. */
+function isPlacement(value: unknown): value is LogoPlacement {
+  if (!isRecord(value)) return false;
+  const fraction = (n: unknown) => typeof n === 'number' && n >= 0 && n <= 1;
+  return fraction(value.x) && fraction(value.y) && fraction(value.width) && (value.width as number) > 0;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

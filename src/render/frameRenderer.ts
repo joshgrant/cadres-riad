@@ -4,6 +4,7 @@ import { captionMask, captionStyle, fitCaption, plaqueRect } from './caption';
 import { drawMoulding } from './gl/moulding';
 import { drawNeutralBackdrop } from './backdrop';
 import type { FrameLayout } from './layout';
+import { logoRect, type LogoPlacement } from './logo';
 import { drawPlaceholderFrame, drawWindowShadow } from './placeholderFrame';
 import { POLAROID_SHADOW_EXTENT, drawPolaroidCard, drawPolaroidWindowOverlay } from './polaroid';
 import { photoRect, type View } from './view';
@@ -84,11 +85,13 @@ export interface WindowPhoto {
   view: View;
   /** With détourage: the people layer (same aspect as the photo) and the background behind them. */
   cutout?: { image: CanvasImageSource; background: CanvasImageSource | null; backgroundSize?: { width: number; height: number } } | null;
+  /** The riad's logo, over everything in the window; `aspect` is its width over height. */
+  logo?: { image: CanvasImageSource; aspect: number; placement: LogoPlacement } | null;
 }
 
 /**
  * The picture in the window, back to front: the background (or the photo when
- * détourage is off), then the people layer with its pan and zoom. With no photo,
+ * détourage is off), then the people layer with its pan and zoom, then the logo. With no photo,
  * the soft neutral backdrop.
  */
 export function drawWindowContent(ctx: CanvasRenderingContext2D, layout: FrameLayout, photo: WindowPhoto | null): void {
@@ -116,6 +119,10 @@ export function drawWindowContent(ctx: CanvasRenderingContext2D, layout: FrameLa
     ctx.drawImage(photo.cutout.image, rect.x, rect.y, rect.width, rect.height);
   } else {
     ctx.drawImage(photo.image, rect.x, rect.y, rect.width, rect.height);
+  }
+  if (photo.logo) {
+    const box = logoRect(photo.logo.placement, inner, photo.logo.aspect);
+    ctx.drawImage(photo.logo.image, box.x, box.y, box.width, box.height);
   }
   ctx.restore();
 }

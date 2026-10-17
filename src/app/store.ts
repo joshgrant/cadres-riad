@@ -52,6 +52,12 @@ export const downloadProgress = signal<number | undefined>(undefined);
 /** His selected background, decoded; null for Neutre. */
 export const backgroundImage = signal<ImageBitmap | null>(null);
 
+/** The selected logo, decoded with transparent margins trimmed; null for Aucun. */
+export const logoImage = signal<ImageBitmap | null>(null);
+
+/** The logo was clicked: it shows its outline and resize handles. */
+export const logoSelected = signal(false);
+
 /** The people layer is shown, so pan and zoom move only the people. */
 export const cutoutActive = computed(
   () => prefs.value.cutout && photo.value !== null && cutout.value !== null && cutout.value.hash === photo.value.hash,

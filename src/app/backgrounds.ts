@@ -4,6 +4,7 @@ import { deleteBackground, listBackgrounds, putBackground, type StoredBackground
 import { showToast } from '../ui/toastStore';
 import { isAcceptedImage } from './actions';
 import { step } from './history';
+import { resized } from './images';
 import { NEUTRAL_BACKGROUND_ID, prefs, updatePrefs } from './prefs';
 import { backgroundImage } from './store';
 
@@ -43,21 +44,6 @@ export async function loadBackgrounds(): Promise<void> {
   if (selected !== NEUTRAL_BACKGROUND_ID && !fullImages.has(selected)) updatePrefs({ backgroundId: NEUTRAL_BACKGROUND_ID });
 }
 
-async function resized(file: Blob, edge: number): Promise<Blob> {
-  const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
-  const scale = Math.min(1, edge / Math.max(bitmap.width, bitmap.height));
-  const canvas = document.createElement('canvas');
-  canvas.width = Math.round(bitmap.width * scale);
-  canvas.height = Math.round(bitmap.height * scale);
-  const ctx = canvas.getContext('2d')!;
-  ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  bitmap.close();
-  return new Promise((resolve, reject) =>
-    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('encode failed'))), 'image/jpeg', 0.9),
-  );
-}
-
 let persistAsked = false;
 
 /** Adds images as backgrounds; the newest is selected (which turns détourage on). */
@@ -68,13 +54,18 @@ export async function addBackgrounds(files: File[]): Promise<void> {
   for (const file of accepted) {
     let item: StoredBackground;
     try {
-      item = {
-        id: `bg-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
-        name: file.name.replace(/\.[^.]+$/, ''),
-        createdAt: Date.now(),
-        image: await (await resized(file, FULL_EDGE)).arrayBuffer(),
-        thumb: await (await resized(file, THUMB_EDGE)).arrayBuffer(),
-      };
+      const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+      try {
+        item = {
+          id: `bg-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+          name: file.name.replace(/\.[^.]+$/, ''),
+          createdAt: Date.now(),
+          image: await (await resized(bitmap, FULL_EDGE, 'image/jpeg')).arrayBuffer(),
+          thumb: await (await resized(bitmap, THUMB_EDGE, 'image/jpeg')).arrayBuffer(),
+        };
+      } finally {
+        bitmap.close();
+      }
     } catch {
       showToast({ body: t('error.format'), tone: 'error', duration: 6000 });
       continue;

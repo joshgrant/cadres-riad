@@ -35,6 +35,19 @@ describe('history', () => {
     expect(prefs.value.frame).toBe('noyer');
   });
 
+  it('undoes logo choices and moves', () => {
+    step(() => updatePrefs({ logoId: 'brown' }));
+    step(() => updatePrefs({ logo: { x: 0.5, y: 0.5, width: 0.3 } }));
+    undo();
+    expect(prefs.value.logo).toEqual({ x: 0.03, y: 0.04, width: 0.2 });
+    expect(prefs.value.logoId).toBe('brown');
+    undo();
+    expect(prefs.value.logoId).toBe('default');
+    redo();
+    redo();
+    expect(prefs.value.logo.width).toBe(0.3);
+  });
+
   it('keeps at most 50 steps', () => {
     for (let i = 0; i < 60; i++) step(() => (view.value = { cx: 0.5, cy: 0.5, zoom: 1 + i / 100 + 0.01 }));
     for (let i = 0; i < 60; i++) undo();

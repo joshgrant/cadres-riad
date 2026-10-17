@@ -8,6 +8,7 @@ import {
   cutoutFirstRun,
   cutoutStatus,
   fontsVersion,
+  logoImage,
   orientation,
   photo,
   reducedMotion,
@@ -29,6 +30,7 @@ import { ProgressOverlay } from '../ui/ProgressOverlay';
 import { ToastHost } from '../ui/Toast';
 import { CaptionEditor } from './CaptionEditor';
 import { EmptyState } from './EmptyState';
+import { LogoEditor } from './LogoEditor';
 import { useCanvasSize } from './useCanvasSize';
 import { useGestures } from './useGestures';
 import './CanvasArea.css';
@@ -113,7 +115,7 @@ export function CanvasArea() {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     drawWindowContent(ctx, layout, windowPhoto(current, active, background));
     drawWindowOverlay(ctx, layout, frame);
-  }, [frameLayer, current, view.value, active, background]);
+  }, [frameLayer, current, view.value, active, background, logoImage.value, prefs.value.logo]);
 
   const frameName = t(frameNameKey(frame));
   const label = t('canvas.label', { frame: frameName, caption: frenchSpacing(caption) || t('caption.placeholder') });
@@ -166,6 +168,7 @@ export function CanvasArea() {
           }}
         />
       )}
+      {layout && current && <LogoEditor layout={layout} />}
       {layout && !current && <EmptyState rect={layout.window} onChoose={() => void choosePhoto()} />}
       {layout && <CaptionEditor frame={frame} layout={layout} onDraft={setCaptionDraft} />}
 

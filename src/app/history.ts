@@ -5,10 +5,10 @@ import { view } from './store';
 
 /**
  * Undo and redo, in memory, capped at 50 steps. A step is the editor state
- * before a change: frame, orientation, background, détourage, caption, pan/zoom.
+ * before a change: frame, orientation, background, détourage, caption, logo, pan/zoom.
  */
 
-type Snapshot = Pick<Prefs, 'frame' | 'orientation' | 'backgroundId' | 'cutout' | 'caption'> & { view: View };
+type Snapshot = Pick<Prefs, 'frame' | 'orientation' | 'backgroundId' | 'cutout' | 'caption' | 'logoId' | 'logo'> & { view: View };
 
 const LIMIT = 50;
 const undoStack = signal<Snapshot[]>([]);
@@ -18,8 +18,8 @@ export const canUndo = () => undoStack.value.length > 0;
 export const canRedo = () => redoStack.value.length > 0;
 
 export function capture(): Snapshot {
-  const { frame, orientation, backgroundId, cutout, caption } = prefs.value;
-  return { frame, orientation, backgroundId, cutout, caption, view: view.value };
+  const { frame, orientation, backgroundId, cutout, caption, logoId, logo } = prefs.value;
+  return { frame, orientation, backgroundId, cutout, caption, logoId, logo, view: view.value };
 }
 
 function same(a: Snapshot, b: Snapshot): boolean {
@@ -29,6 +29,10 @@ function same(a: Snapshot, b: Snapshot): boolean {
     a.backgroundId === b.backgroundId &&
     a.cutout === b.cutout &&
     a.caption === b.caption &&
+    a.logoId === b.logoId &&
+    a.logo.x === b.logo.x &&
+    a.logo.y === b.logo.y &&
+    a.logo.width === b.logo.width &&
     a.view.cx === b.view.cx &&
     a.view.cy === b.view.cy &&
     a.view.zoom === b.view.zoom

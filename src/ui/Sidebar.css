@@ -41,8 +41,20 @@
   inset: calc(-1 * var(--space-2));
 }
 
-/* His backgrounds are named after their files, which can be long. */
-.sidebar__background-grid .tile__label {
+/* Logos show whole, on the neutral backdrop's light grey, so white logos still read. */
+.sidebar__logo-grid .tile__preview {
+  background: var(--bg-canvas);
+}
+
+.sidebar__logo-grid .tile__preview > img {
+  box-sizing: border-box;
+  padding: var(--space-2);
+  object-fit: contain;
+}
+
+/* His backgrounds and logos are named after their files, which can be long. */
+.sidebar__background-grid .tile__label,
+.sidebar__logo-grid .tile__label {
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;

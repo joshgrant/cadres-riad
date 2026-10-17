@@ -5,6 +5,7 @@ import { loadPhoto } from './app/actions';
 import { persistPrefs } from './app/prefs';
 import { installShortcuts } from './app/shortcuts';
 import { installBackgrounds } from './app/backgrounds';
+import { installLogos } from './app/logos';
 import { installCutout } from './segmentation/cutout';
 import { installUpdateCheck } from './app/updates';
 import { fontsVersion } from './app/store';
@@ -41,6 +42,7 @@ for (const type of ['dragover', 'drop'] as const) {
 persistPrefs();
 installShortcuts();
 installBackgrounds();
+installLogos();
 installCutout();
 installUpdateCheck();
 platform.onOpenedFile((file) => void loadPhoto(file));

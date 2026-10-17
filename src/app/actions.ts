@@ -6,7 +6,7 @@ import { DEFAULT_VIEW, clampView, panBy, zoomAt, type Size } from '../render/vie
 import { showToast } from '../ui/toastStore';
 import { clearHistory, step } from './history';
 import { NEUTRAL_BACKGROUND_ID, prefs, updatePrefs } from './prefs';
-import { cutout, photo, view, viewMode } from './store';
+import { cutout, logoSelected, photo, view, viewMode } from './store';
 
 /** Current frame window size in CSS pixels, kept up to date by the canvas. */
 export const windowSize = signal<Size>({ width: 0, height: 0 });
@@ -70,6 +70,7 @@ export async function loadPhoto(file: File): Promise<boolean> {
   photo.value?.bitmap.close();
   photo.value = { bitmap, width: bitmap.width, height: bitmap.height, name: file.name, hash };
   view.value = DEFAULT_VIEW;
+  logoSelected.value = false;
   clearHistory();
   return true;
 }
@@ -86,14 +87,15 @@ async function sha256(file: Blob): Promise<string> {
 
 /**
  * Réinitialiser: back to the empty editor, as after a fresh launch. The photo
- * goes, the background returns to Neutre and détourage turns off; the frame and
- * caption stay, since they are his usual setup.
+ * goes, the background returns to Neutre and détourage turns off; the frame,
+ * caption and logo stay, since they are his usual setup.
  */
 export function resetEditor(): void {
   photo.value?.bitmap.close();
   photo.value = null;
   cutout.value = null;
   view.value = DEFAULT_VIEW;
+  logoSelected.value = false;
   updatePrefs({ backgroundId: NEUTRAL_BACKGROUND_ID, cutout: false });
   clearHistory();
 }
@@ -138,6 +140,10 @@ export function rotate(): void {
 
 export function chooseFrame(frame: FrameId): void {
   step(() => updatePrefs({ frame }));
+}
+
+export function chooseLogo(logoId: string): void {
+  step(() => updatePrefs({ logoId }));
 }
 
 /** Choosing a background has only one meaning, so it also turns détourage on. */

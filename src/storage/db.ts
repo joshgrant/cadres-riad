@@ -1,7 +1,7 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 
 /**
- * IndexedDB `cadres`: his backgrounds, and cached cut-outs keyed by the photo
+ * IndexedDB `cadres`: his backgrounds and logos, and cached cut-outs keyed by the photo
  * file's SHA-256. Every access is guarded; storage trouble never breaks editing.
  */
 
@@ -20,6 +20,16 @@ export interface StoredBackground {
   thumb: ArrayBuffer | Blob;
 }
 
+export interface StoredLogo {
+  id: string;
+  name: string;
+  createdAt: number;
+  /** PNG bytes with alpha, transparent margins trimmed, long edge at most 2400px. */
+  image: ArrayBuffer;
+  /** PNG bytes, long edge 400px. */
+  thumb: ArrayBuffer;
+}
+
 export interface StoredMask {
   hash: string;
   /** PNG cut-out with alpha. */
@@ -31,10 +41,11 @@ export interface StoredMask {
 interface CadresDb extends DBSchema {
   backgrounds: { key: string; value: StoredBackground; indexes: { createdAt: number } };
   masks: { key: string; value: StoredMask; indexes: { usedAt: number } };
+  logos: { key: string; value: StoredLogo; indexes: { createdAt: number } };
 }
 
 const DB_NAME = 'cadres';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 let opening: Promise<IDBPDatabase<CadresDb>> | null = null;
 
@@ -49,6 +60,9 @@ export function db(): Promise<IDBPDatabase<CadresDb>> {
       if (oldVersion === 1) {
         // Version 1 stored Blobs; cut-outs are only a cache, so start it afresh.
         void transaction.objectStore('masks').clear();
+      }
+      if (oldVersion < 3) {
+        database.createObjectStore('logos', { keyPath: 'id' }).createIndex('createdAt', 'createdAt');
       }
     },
   });
@@ -74,6 +88,30 @@ export async function putBackground(background: StoredBackground): Promise<void>
 export async function deleteBackground(id: string): Promise<void> {
   try {
     await (await db()).delete('backgrounds', id);
+  } catch {
+    // Already gone.
+  }
+}
+
+/* Logos */
+
+export async function listLogos(): Promise<StoredLogo[]> {
+  try {
+    const all = await (await db()).getAll('logos');
+    return all.sort((a, b) => b.createdAt - a.createdAt);
+  } catch {
+    return [];
+  }
+}
+
+/** Throws on quota errors, so the caller can tell him storage is full. */
+export async function putLogo(logo: StoredLogo): Promise<void> {
+  await (await db()).put('logos', logo);
+}
+
+export async function deleteLogo(id: string): Promise<void> {
+  try {
+    await (await db()).delete('logos', id);
   } catch {
     // Already gone.
   }

@@ -24,7 +24,9 @@ describe('parsePrefs', () => {
       backgroundId: 'bg-123',
       cutout: true,
       caption: 'Noël 2026 !',
-      collapsed: { frame: true, background: false },
+      logoId: 'logo-abc',
+      logo: { x: 0.5, y: 0.25, width: 0.4 },
+      collapsed: { frame: true, background: false, logo: true },
       hintDismissed: true,
     };
     expect(parsePrefs(JSON.stringify(stored))).toEqual(stored);
@@ -35,6 +37,21 @@ describe('parsePrefs', () => {
       JSON.stringify({ version: 1, frame: 'gold', orientation: 'diagonal', cutout: 'yes', caption: 42, collapsed: null, hintDismissed: true }),
     );
     expect(parsed).toEqual({ ...defaultPrefs(), hintDismissed: true });
+  });
+
+  it('fills in the logo for prefs saved before it existed', () => {
+    const { logoId: _id, logo: _logo, ...older } = defaultPrefs();
+    const parsed = parsePrefs(JSON.stringify({ ...older, frame: 'noir', collapsed: { frame: true, background: true } }));
+    expect(parsed.logoId).toBe('default');
+    expect(parsed.logo).toEqual({ x: 0.03, y: 0.04, width: 0.2 });
+    expect(parsed.collapsed).toEqual({ frame: true, background: true, logo: false });
+    expect(parsed.frame).toBe('noir');
+  });
+
+  it('rejects a logo placement outside the window', () => {
+    for (const logo of [{ x: -1, y: 0, width: 0.2 }, { x: 0, y: 0, width: 0 }, { x: 0, y: 0 }, 'top-left']) {
+      expect(parsePrefs(JSON.stringify({ version: 1, logo })).logo).toEqual(defaultPrefs().logo);
+    }
   });
 
   it('keeps an empty caption but caps length at 60', () => {
