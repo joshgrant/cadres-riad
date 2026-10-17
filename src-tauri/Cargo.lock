@@ -377,7 +377,7 @@ dependencies = [
 
 [[package]]
 name = "cadres-riad"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "log",
  "objc2-app-kit",
