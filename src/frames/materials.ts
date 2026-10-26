@@ -1,6 +1,6 @@
 import type { MaterialShader } from '../render/gl/moulding';
-import { FRAME_GEOMETRY } from './geometry';
 import type { FrameId } from './ids';
+import { NIL, nilLayoutGlsl } from './nilLayout';
 import { ORNAMENTS_GLSL } from './ornaments';
 
 /**
@@ -576,8 +576,8 @@ float jointOffset(vec2 q) { return -1000.0; }
  * each dot; separate cobalt strips with round ends; a cobalt line at the window,
  * which the strips stop short of. The strips fan around the rounded corners like
  * the spokes of the plate's rim, so they read as one ring; the bands stay square.
- * Strips and dots are placed as shapes in rail space, so dots stay round even in
- * the corners. One slab, no joints. The whole rail carries the pattern, as the
+ * Strips and dots are placed as shapes in rail space (laid out in nilLayout.ts),
+ * so dots stay round even in the corners. One slab, no joints. The whole rail carries the pattern, as the
  * plate does (the restraint rule is set aside here on purpose). On the bottom
  * rail the strips nearest the caption are left out, and the caption is cut into
  * the plain quartz between them and filled cobalt.
@@ -587,26 +587,20 @@ const nil: MaterialShader = {
   glsl: /* glsl */ `
 ${EDGE_GLSL}
 ${ORNAMENTS_GLSL}
-// Outer corner radius in rail widths (the frame is square, every rail the same width).
-const float CORNER = ${((FRAME_GEOMETRY.nil.cornerRadius ?? 0) / FRAME_GEOMETRY.nil.rail).toFixed(4)};
-// The strips fan from a point this far in from the outer corner (inside the window).
-const float PIVOT = 3.0;
-// Depth at which the strips are spaced PERIOD apart; they close up towards the window.
-const float SPACING_DEPTH = 0.55;
-const float PERIOD = 0.13;
+${nilLayoutGlsl()}
+const float CORNER = ${NIL.corner.toFixed(4)};
+const float PIVOT = ${NIL.pivot.toFixed(4)};
 const float QUARTER = 0.78539816;
-
-// Depths across the rail, in rail widths from the outer edge.
-const float BORDER_IN = 0.02;
-const float BORDER_OUT = 0.05;
-const float BAND_IN = 0.075;
-const float DOT_RADIUS = 0.022;
-const float CAP_CENTRE = 0.235;  // each strip's round top, and the arch around it
-const float FOOT_CENTRE = 0.83;  // each strip's round foot
-const float STRIP = 0.22;        // strip half-width, as a fraction of the spacing
-const float LINE_IN = 0.89;
-const float LINE_OUT = 0.925;
-const float CHANNEL = 0.56;      // quartz channel half-width, as a fraction of the spacing
+const float BORDER_IN = ${NIL.borderIn};
+const float BORDER_OUT = ${NIL.borderOut};
+const float BAND_IN = ${NIL.bandIn};
+const float DOT_RADIUS = ${NIL.dotRadius};
+const float CAP_CENTRE = ${NIL.capCentre};
+const float FOOT_CENTRE = ${NIL.footCentre};
+const float STRIP = ${NIL.strip};
+const float CHANNEL = ${NIL.channel};
+const float LINE_IN = ${NIL.lineIn};
+const float LINE_OUT = ${NIL.lineOut};
 
 // Depth in from the rounded outer edge, at corner-local p.
 float edgeDepth(vec2 p) {
@@ -620,12 +614,11 @@ vec2 cornerLocal(vec2 q) {
   return vec2(q.x > L * 0.5 ? L - q.x : q.x, q.y);
 }
 
-// Lengths along the band at a given depth: from the diagonal to the end of the fan,
-// and from diagonal to diagonal. The strip count is fixed, so spacing shrinks inward.
+// As in nilLayout.ts: lengths along the band at a depth, from the diagonal to the
+// end of the fan and from diagonal to diagonal; the spacing shrinks inward.
 float fanLength(float depth) { return (PIVOT - depth) * QUARTER; }
 float bandLength(float depth) { return 2.0 * fanLength(depth) + railLength() - 2.0 * PIVOT; }
-float stripCount() { return max(1.0, floor(bandLength(SPACING_DEPTH) / PERIOD + 0.5)); }
-float spacing(float depth) { return bandLength(depth) / stripCount(); }
+float spacing(float depth) { return bandLength(depth) / STRIP_COUNT; }
 
 // Fractional strip index at corner-local p, counted from the nearer diagonal (a strip sits on it).
 float stripIndex(vec2 p, float depth) {
@@ -633,18 +626,6 @@ float stripIndex(vec2 p, float depth) {
     ? fanLength(depth) + p.x - PIVOT
     : (PIVOT - depth) * (QUARTER - atan(PIVOT - p.x, PIVOT - depth));
   return along / spacing(depth);
-}
-
-// Corner-local point of strip index k at a depth, on that depth's (rounded) contour.
-// Negative k lies past the diagonal, on the neighbouring rail: the mirror image.
-vec2 stripPoint(float k, float depth) {
-  float along = abs(k) * spacing(depth);
-  float fan = fanLength(depth);
-  vec2 p = along >= fan
-    ? vec2(PIVOT + along - fan, depth)
-    : vec2(PIVOT - (PIVOT - depth) * tan(QUARTER - along / (PIVOT - depth)), depth);
-  if (p.x < CORNER && p.y < CORNER) p = vec2(CORNER) + normalize(p - vec2(CORNER)) * (CORNER - depth);
-  return k < 0.0 ? p.yx : p;
 }
 
 // Distance to a capsule whose radius changes from ra at a to rb at b.
@@ -672,45 +653,9 @@ float clearing() {
 }
 
 // Strip index counted from the rail's start, from a corner-local one.
-float globalIndex(vec2 q, float k) { return q.x > railLength() * 0.5 ? stripCount() - k : k; }
+float globalIndex(vec2 q, float k) { return q.x > railLength() * 0.5 ? STRIP_COUNT - k : k; }
 
 bool outsideClearing(float fromMiddle, float clear) { return clear == 0.0 || fromMiddle >= clear; }
-
-// Spacing between strip k's neighbours at a depth, measured square to the strip.
-float spacingAcross(float k, float depth, vec2 along) {
-  vec2 chord = stripPoint(k + 0.5, depth) - stripPoint(k - 0.5, depth);
-  return abs(chord.x * along.y - chord.y * along.x);
-}
-
-// Radius of the round top of strip k's quartz channel: the strip's half-width (the
-// fan widens it) plus the straight runs' gap.
-float archRadius(float k) {
-  vec2 top = stripPoint(k, CAP_CENTRE);
-  vec2 axis = normalize(stripPoint(k, FOOT_CENTRE) - top);
-  return STRIP * spacingAcross(k, CAP_CENTRE, axis) + (CHANNEL - STRIP) * spacing(CAP_CENTRE);
-}
-
-// Centre of the dot between strips j - 0.5 and j + 0.5: equally far from the band's
-// top edge and from both channels' round tops, wherever the fan staggers them.
-vec2 dotCentre(float j) {
-  float k = floor(abs(j));
-  vec2 a = stripPoint(k, CAP_CENTRE);
-  vec2 b = stripPoint(k + 1.0, CAP_CENTRE);
-  float rim = 0.5 * (archRadius(k) + archRadius(k + 1.0));
-  vec2 mid = 0.5 * (a + b);
-  vec2 dir = normalize(b - a);
-  vec2 outward = vec2(dir.y, -dir.x);
-  if (outward.y > 0.0) outward = -outward;
-  float h = 0.5 * length(b - a);
-  // Along the bisector, mid + outward * t: (depth - BAND_IN) = distance to an arch's centre - rim.
-  float lift = mid.y - BAND_IN + rim;
-  float qa = outward.y * outward.y - 1.0;
-  float qb = 2.0 * lift * outward.y;
-  float qc = lift * lift - h * h;
-  float t = abs(qa) < 1e-5 ? -qc / qb : (-qb - sqrt(max(qb * qb - 4.0 * qa * qc, 0.0))) / (2.0 * qa);
-  vec2 c = mid + outward * t;
-  return j < 0.0 ? c.yx : c;
-}
 
 // x: signed distance to the cobalt, positive in cobalt, negative in quartz;
 // y: how well the strips resolve at this size (0 when finer than a few pixels);
@@ -720,7 +665,7 @@ vec3 inlay(vec2 q) {
   float d = edgeDepth(p);
   float k0 = floor(stripIndex(p, d) + 0.5);
   float clear = clearing();
-  float middle = stripCount() * 0.5;
+  float middle = STRIP_COUNT * 0.5;
 
   float sd = min(d - BORDER_IN, BORDER_OUT - d);
   sd = max(sd, min(d - LINE_IN, LINE_OUT - d));
@@ -733,11 +678,11 @@ vec3 inlay(vec2 q) {
   float strips = -1e3;
   for (int i = -1; i <= 1; i++) {
     float k = k0 + float(i);
-    vec2 top = stripPoint(k, CAP_CENTRE);
-    vec2 foot = stripPoint(k, FOOT_CENTRE);
+    vec2 top, foot, wide;
+    nilStrip(k, top, foot, wide);
     vec2 axis = normalize(foot - top);
-    float wideTop = spacingAcross(k, CAP_CENTRE, axis);
-    float wideFoot = spacingAcross(k, FOOT_CENTRE, axis);
+    float wideTop = wide.x;
+    float wideFoot = wide.y;
     float rimTop = STRIP * wideTop + (CHANNEL - STRIP) * spacing(CAP_CENTRE);
     float rimFoot = STRIP * wideFoot + (CHANNEL - STRIP) * spacing(FOOT_CENTRE);
     float channel = sdTaperedCapsule(p, top, foot, rimTop, rimFoot);
@@ -753,7 +698,7 @@ vec3 inlay(vec2 q) {
     }
   }
   for (int i = -2; i <= 1; i++) {
-    band = min(band, length(p - dotCentre(k0 + float(i) + 0.5)) - DOT_RADIUS);
+    band = min(band, length(p - nilDot(k0 + float(i) + 0.5)) - DOT_RADIUS);
   }
   sd = max(sd, max(band, strips));
 
@@ -763,9 +708,8 @@ vec3 inlay(vec2 q) {
   return vec3(sd, resolve, among);
 }
 
-// Cobalt coverage, softened by width; strips too fine to draw blend to their average.
-float cobalt(vec2 q, float width) {
-  vec3 s = inlay(q);
+// Cobalt coverage from inlay(), softened by width; strips too fine to draw blend to their average.
+float cobalt(vec3 s, float width) {
   float sharp = smoothstep(-width, width, s.x);
   return s.z > 0.5 ? mix(0.44, sharp, s.y) : sharp;
 }
@@ -774,12 +718,12 @@ float frameHeight(vec2 q) {
   float d = edgeDepth(cornerLocal(q));
   float face = 0.05 * roundEdge(d, 0.035) * roundEdge(1.0 - q.y, 0.03);
   // The crystal sits a hair below the polished quartz, so its edges catch the light.
-  return face - 0.004 * cobalt(q, max(u_pixel, 0.006));
+  return face - 0.004 * cobalt(inlay(q), max(u_pixel, 0.006));
 }
 
 void frameSurface(vec2 q, float h, float cavity, inout Surface surface) {
-  float aa = u_pixel * 0.75;
-  float blue = cobalt(q, aa);
+  vec3 s = inlay(q);
+  float blue = cobalt(s, u_pixel * 0.75);
   // Quartz: milky white, faint grey veins and soft cloud, continuous across the rails.
   vec2 slab = imageAt(q) / u_railWidth;
   float cloud = fbm(slab * 0.6 + 7.9);
@@ -787,7 +731,7 @@ void frameSurface(vec2 q, float h, float cavity, inout Surface surface) {
   vec3 quartz = mix(vec3(0.95, 0.94, 0.92), vec3(0.89, 0.89, 0.9), cloud * 0.6);
   quartz = mix(quartz, vec3(0.8, 0.8, 0.83), vein * 0.35);
   // Cobalt crystal: dark at the walls, glowing deeper in, with faint facets.
-  float inside = smoothstep(0.0, 0.015, inlay(q).x);
+  float inside = smoothstep(0.0, 0.015, s.x);
   float facet = 1.0 - smoothstep(0.0, 0.05, cellEdge(slab * 9.0 + 1.7));
   vec3 crystal = mix(vec3(0.02, 0.07, 0.3), vec3(0.07, 0.2, 0.62), inside);
   crystal += vec3(0.03, 0.05, 0.1) * facet * inside;
