@@ -57,7 +57,7 @@ test.beforeEach(async ({ page }) => {
 test('the Logo section offers Aucun, the riad logos and Ajouter; Bleu is on by default', async ({ page }) => {
   const group = page.getByRole('radiogroup', { name: 'Logo' });
   await expect(group.getByRole('radio')).toHaveText(['Aucun', 'Bleu', 'Bois']);
-  await expect(page.getByRole('radio', { name: 'Bleu' })).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByRole('radio', { name: 'Bleu', exact: true })).toHaveAttribute('aria-checked', 'true');
   await expect(page.getByRole('button', { name: 'Ajouter un logo' })).toBeVisible();
 
   await loadPhoto(page);
@@ -83,7 +83,7 @@ test('dragging the logo moves it, not the photo; undo puts it back', async ({ pa
   await loadPhoto(page);
   await page.getByRole('radio', { name: 'Aucun' }).click();
   const photoOnly = await windowPixels(page);
-  await page.getByRole('radio', { name: 'Bleu' }).click();
+  await page.getByRole('radio', { name: 'Bleu', exact: true }).click();
   await expect(logo(page)).toBeVisible();
 
   const before = await placement(page);
@@ -98,7 +98,7 @@ test('dragging the logo moves it, not the photo; undo puts it back', async ({ pa
   // The photo underneath didn't pan.
   await page.getByRole('radio', { name: 'Aucun' }).click();
   expect(await windowPixels(page)).toEqual(photoOnly);
-  await page.getByRole('radio', { name: 'Bleu' }).click();
+  await page.getByRole('radio', { name: 'Bleu', exact: true }).click();
 
   const key = await mod(page);
   await page.keyboard.press(`${key}+z`); // back to Aucun
