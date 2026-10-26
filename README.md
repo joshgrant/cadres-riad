@@ -2,7 +2,7 @@
 
 A French desktop app for macOS and Windows that puts a photo in a luxury, Moroccan-inspired frame, adds a caption and saves a PNG ready to email. Everything runs on the computer: no server, no account.
 
-Status: **feature-complete for v1, in review**. Seven frames rendered per pixel with WebGL (engraved-brass Doré, carved walnut Noyer, weathered Bois brut, light oak, black-stained oak, tadelakt white, and a paper Polaroid), captions edited in place on the frame (engraved, burned, gilded or handwritten), background removal on the device with a library of his own backgrounds, undo/redo, and a 2400px PNG export with a transparent background.
+Status: **feature-complete for v1, in review**. Eight frames rendered per pixel with WebGL (engraved-brass Doré, carved walnut Noyer, weathered Bois brut, light oak, black-stained oak, tadelakt white, a paper Polaroid, and Le Nil Bleu, a square quartz frame inlaid with cobalt flutes after the Nil Bleu plate), captions edited in place on the frame (engraved, burned, gilded or handwritten), background removal on the device with a library of his own backgrounds, undo/redo, and a 2400px PNG export with a transparent background.
 
 Background removal uses `@imgly/background-removal` 1.7.0. The model (about 56–111 MB depending on whether WebGPU is available) downloads once from imgly's CDN the first time détourage is used, then lives in the app data folder (desktop) or Cache Storage (web) and works offline.
 

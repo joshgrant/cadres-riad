@@ -1,4 +1,4 @@
-import { PLACEHOLDER_COLOURS } from '../frames/geometry';
+import { FRAME_GEOMETRY, PLACEHOLDER_COLOURS } from '../frames/geometry';
 import type { FrameId } from '../frames/ids';
 import type { FrameLayout } from './layout';
 
@@ -15,6 +15,7 @@ export function drawPlaceholderFrame(
   const { frame: outer, window: inner } = layout;
   if (outer.width <= 0 || outer.height <= 0) return;
   const colours = PLACEHOLDER_COLOURS[frame];
+  const radius = (FRAME_GEOMETRY[frame].cornerRadius ?? 0) * Math.min(outer.width, outer.height);
 
   ctx.save();
   if (options.wallShadow) {
@@ -24,8 +25,14 @@ export function drawPlaceholderFrame(
     ctx.shadowOffsetY = outer.height * 0.015;
   }
   ctx.fillStyle = colours.face;
-  ctx.fillRect(outer.x, outer.y, outer.width, outer.height);
+  outline(ctx, outer, radius);
+  ctx.fill();
   ctx.restore();
+
+  // Everything else stays inside the (possibly rounded) outline.
+  ctx.save();
+  outline(ctx, outer, radius);
+  ctx.clip();
 
   // Mitred rails, each shaded as if lit from above.
   const corners = {
@@ -79,6 +86,19 @@ export function drawPlaceholderFrame(
   ctx.lineWidth = lip;
   ctx.strokeRect(inner.x - lip / 2, inner.y - lip / 2, inner.width + lip, inner.height + lip);
   ctx.restore();
+  ctx.restore();
+}
+
+/** The frame's outer edge as the current path, with rounded corners when `radius` > 0. */
+function outline(ctx: CanvasRenderingContext2D, rect: FrameLayout['frame'], radius: number): void {
+  const { x, y, width, height } = rect;
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + width, y, x + width, y + height, radius);
+  ctx.arcTo(x + width, y + height, x, y + height, radius);
+  ctx.arcTo(x, y + height, x, y, radius);
+  ctx.arcTo(x, y, x + width, y, radius);
+  ctx.closePath();
 }
 
 /** Inner shadow cast by the top rail onto the picture; much fainter on the sides, none at the bottom. */

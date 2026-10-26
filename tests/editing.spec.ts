@@ -202,7 +202,7 @@ test('every frame renders without errors, in both orientations', async ({ page }
   });
   page.on('pageerror', (error) => errors.push(error.message));
   await loadPhoto(page);
-  for (const name of ['Doré sculpté', 'Noyer sculpté', 'Bois brut', 'Chêne clair', 'Noir', 'Blanc', 'Polaroid']) {
+  for (const name of ['Doré sculpté', 'Noyer sculpté', 'Bois brut', 'Chêne clair', 'Noir', 'Blanc', 'Polaroid', 'Le Nil Bleu']) {
     await page.getByRole('radio', { name }).click();
     await expect(page.getByRole('radio', { name })).toHaveAttribute('aria-checked', 'true');
     const rotate = page.getByRole('button', { name: 'Pivoter le cadre' });

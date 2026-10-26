@@ -12,6 +12,8 @@ export interface FrameGeometry {
   windowAspect?: number;
   /** Only ever shown upright (Polaroid). */
   portraitOnly?: boolean;
+  /** Rounded outer corners, as a fraction of the frame's side (Le Nil Bleu). */
+  cornerRadius?: number;
 }
 
 export const FRAME_GEOMETRY: Record<FrameId, FrameGeometry> = {
@@ -23,6 +25,8 @@ export const FRAME_GEOMETRY: Record<FrameId, FrameGeometry> = {
   blanc: { rail: 0.07 },
   // Instant-film card proportions: 88 × 107 mm with a 79 × 79 mm picture.
   polaroid: { rail: 4.5 / 88, topRail: 6 / 88, bottomRail: 22 / 88, windowAspect: 1, portraitOnly: true },
+  // Square, like a plate's rim: a square has no orientation to rotate.
+  nil: { rail: 0.12, windowAspect: 1, portraitOnly: true, cornerRadius: 0.025 },
 };
 
 /**
@@ -37,6 +41,7 @@ export const PLACEHOLDER_COLOURS: Record<FrameId, { face: string; lip: string }>
   noir: { face: '#1c1b1a', lip: '#0c0c0c' },
   blanc: { face: '#f2efe8', lip: '#dcd7cc' },
   polaroid: { face: '#f4f3ef', lip: '#e2e0da' },
+  nil: { face: '#f4f2ee', lip: '#1d3a8a' },
 };
 
 /** Polaroid ignores the rotate setting: it is always an upright card. */

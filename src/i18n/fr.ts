@@ -17,6 +17,7 @@ const source = {
   'frame.noir': 'Noir',
   'frame.blanc': 'Blanc',
   'frame.polaroid': 'Polaroid',
+  'frame.nil': 'Le Nil Bleu',
   'bg.neutral': 'Neutre',
   'bg.add': 'Ajouter un fond',
   'bg.dropHere': 'Déposez l’image pour l’ajouter',

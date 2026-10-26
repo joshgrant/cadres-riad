@@ -33,6 +33,7 @@ export const CAPTION_KIND: Record<FrameId, CaptionKind> = {
   noir: 'engraved',
   blanc: 'engraved',
   polaroid: 'ink',
+  nil: 'engraved',
 };
 
 const SERIF = "'Cormorant Garamond', 'Times New Roman', serif";
@@ -86,6 +87,7 @@ export function captionStyle(frame: FrameId, layout: FrameLayout): CaptionStyle 
     noir: '#3a3633',
     blanc: '#9a948a',
     polaroid: '#1c203a',
+    nil: '#1d3a8a',
   };
   return {
     kind,

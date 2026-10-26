@@ -1,7 +1,7 @@
 import type { MessageKey } from '../i18n/fr';
 
 /** Frame ids in sidebar order. */
-export const FRAME_IDS = ['dore', 'noyer', 'brut', 'chene', 'noir', 'blanc', 'polaroid'] as const;
+export const FRAME_IDS = ['dore', 'noyer', 'brut', 'chene', 'noir', 'blanc', 'polaroid', 'nil'] as const;
 
 export type FrameId = (typeof FRAME_IDS)[number];
 
